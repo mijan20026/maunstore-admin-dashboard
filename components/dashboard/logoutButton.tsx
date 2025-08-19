@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { Button } from "@/components/ui/button";
 // import { logout } from "../api/authSlice";
-import { logout } from "../../lib/features/authSlice";
+import { logout } from "../../lib/redux/features/authSlice";
 
 export default function LogoutButton() {
   const dispatch = useDispatch();

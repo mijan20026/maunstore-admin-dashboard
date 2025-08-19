@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
-import { addSize, deleteSize, addColor, deleteColor } from '@/lib/features/dataSlice';
+import { addSize, deleteSize, addColor, deleteColor } from '@/lib/redux/features/dataSlice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';

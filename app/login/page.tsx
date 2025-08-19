@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "../../components/ui/use-toast";
-import { useLoginMutation } from "../api/apiSlice"; // RTK Query login mutation
 import { useDispatch } from "react-redux";
-import { setCredentials } from "../api/authSlice"; // Redux slice to store token
+import { setCredentials } from "../../lib/redux/features/authSlice";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react"; // Toggle icons
+import { Eye, EyeOff } from "lucide-react";
+import { useLoginMutation } from "../../lib/redux/features/authApi";
+import Cookies from "js-cookie";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -30,19 +30,13 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      // Call the login mutation
       const result = await login({ email, password }).unwrap();
-
-      // Save token in Redux
+      console.log(result);
       dispatch(setCredentials(result));
-
-      // Store token in cookies (for middleware)
+      // localStorage.setItem("accessToken", result.token);
       Cookies.set("token", result.token, { expires: 1 }); // 1 day
-
       toast({ title: "Login successful!" });
-
-      // Redirect to dashboard
-      router.push("/dashboard/products");
+      router.replace("/dashboard/products");
     } catch (error: any) {
       toast({
         title: "Login failed",
@@ -84,7 +78,7 @@ export default function LoginForm() {
                 required
               />
               <button
-                type="button"
+                type="button" // ✅ prevent submit
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-9 text-gray-400"
               >
@@ -92,19 +86,22 @@ export default function LoginForm() {
               </button>
             </div>
 
-            <div className="flex justify-end">
-              <Link href="/forgotPassword" className="mb-4">
-                Forgot Password
-              </Link>
-            </div>
-
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
+
+          {/* Move Forgot Password link outside the form */}
+          <div className="flex justify-end mt-2">
+            <Link
+              href="/forgotPassword"
+              className="text-sm text-blue-500 hover:underline"
+            >
+              Forgot Password
+            </Link>
+          </div>
         </CardContent>
       </Card>
-
       <ToastContainer />
     </div>
   );

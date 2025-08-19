@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
-import { addProduct, updateProduct } from "@/lib/features/dataSlice";
+import { addProduct, updateProduct } from "@/lib/redux/features/dataSlice";
 import {
   Dialog,
   DialogContent,

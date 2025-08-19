@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
-import { addCategory, updateCategory } from '@/lib/features/dataSlice';
+import { addCategory, updateCategory } from '@/lib/redux/features/dataSlice';
 import {
   Dialog,
   DialogContent,

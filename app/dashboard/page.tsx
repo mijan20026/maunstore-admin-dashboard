@@ -1,35 +1,41 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Overview } from '@/components/dashboard/overview';
-import { RecentSales } from '@/components/dashboard/recent-sales';
-import { Badge } from '@/components/ui/badge';
-import { BarChart3, Users, Package, DollarSign } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Overview } from "@/components/dashboard/overview";
+import { RecentSales } from "@/components/dashboard/recent-sales";
+import { Badge } from "@/components/ui/badge";
+import { BarChart3, Users, Package, DollarSign } from "lucide-react";
 
 export default function DashboardPage() {
   const stats = [
     {
-      title: 'Total Revenue',
-      value: '$45,231.89',
-      change: '+20.1% from last month',
+      title: "Total Revenue",
+      value: "$45,231.89",
+      change: "+20.1% from last month",
       icon: DollarSign,
     },
     {
-      title: 'Subscriptions',
-      value: '+2350',
-      change: '+180.1% from last month',
+      title: "Subscriptions",
+      value: "+2350",
+      change: "+180.1% from last month",
       icon: Users,
     },
     {
-      title: 'Products',
-      value: '+12,234',
-      change: '+19% from last month',
+      title: "Products",
+      value: "+12,234",
+      change: "+19% from last month",
       icon: Package,
     },
     {
-      title: 'Active Users',
-      value: '+573',
-      change: '+201 since last hour',
+      title: "Active Users",
+      value: "+573",
+      change: "+201 since last hour",
       icon: BarChart3,
     },
   ];
@@ -37,7 +43,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Dashboard Overview
+        </h1>
         <p className="text-muted-foreground">
           Here`s what`s happening with your business today.
         </p>
@@ -47,7 +55,9 @@ export default function DashboardPage() {
         {stats.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -92,15 +102,21 @@ export default function DashboardPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>API Status</span>
-                <Badge variant="outline" className="text-green-600">Online</Badge>
+                <Badge variant="outline" className="text-green-600">
+                  Online
+                </Badge>
               </div>
               <div className="flex justify-between">
                 <span>Database</span>
-                <Badge variant="outline" className="text-green-600">Connected</Badge>
+                <Badge variant="outline" className="text-green-600">
+                  Connected
+                </Badge>
               </div>
               <div className="flex justify-between">
                 <span>Payment Gateway</span>
-                <Badge variant="outline" className="text-green-600">Active</Badge>
+                <Badge variant="outline" className="text-green-600">
+                  Active
+                </Badge>
               </div>
             </div>
           </CardContent>

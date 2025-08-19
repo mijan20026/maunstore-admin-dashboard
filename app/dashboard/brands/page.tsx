@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/store";
-import { deleteCategory } from "@/lib/features/dataSlice";
+import { deleteCategory } from "@/lib/redux/features/dataSlice";
 import { Button } from "@/components/ui/button";
 import {
   Card,

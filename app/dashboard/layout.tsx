@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Provider } from 'react-redux';
-import { store } from '@/lib/store';
-import { Sidebar } from '@/components/dashboard/sidebar';
-import { Navbar } from '@/components/dashboard/navbar';
-import { Toaster } from '@/components/ui/sonner';
-import { useEffect } from 'react';
-import { socketService } from '@/lib/socket';
+import { Provider } from "react-redux";
+import { store } from "@/lib/store";
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { Navbar } from "@/components/dashboard/navbar";
+import { Toaster } from "@/components/ui/sonner";
+import { useEffect } from "react";
+import { socketService } from "@/lib/socket";
 
 export default function DashboardLayout({
   children,
@@ -26,9 +26,7 @@ export default function DashboardLayout({
         <Sidebar />
         <div className="ml-0 lg:ml-64 min-h-screen">
           <Navbar />
-          <main className="p-4 lg:p-8 mt-16">
-            {children}
-          </main>
+          <main className="p-4 lg:p-8 mt-16">{children}</main>
         </div>
         <Toaster />
       </div>

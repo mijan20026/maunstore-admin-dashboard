@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/store";
-import { deleteUser } from "@/lib/features/dataSlice";
+import { deleteUser } from "@/lib/redux/features/dataSlice";
 import { Button } from "@/components/ui/button";
 import {
   Card,

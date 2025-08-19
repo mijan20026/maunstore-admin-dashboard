@@ -1,35 +1,20 @@
-// import { configureStore } from '@reduxjs/toolkit';
-// import authReducer from './features/authSlice';
-// import notificationReducer from './features/notificationSlice';
-// import dataReducer from './features/dataSlice';
-
-// export const store = configureStore({
-//   reducer: {
-//     auth: authReducer,
-//     notification: notificationReducer,
-//     data: dataReducer,
-//   },
-// });
-
-// export type RootState = ReturnType<typeof store.getState>;
-// export type AppDispatch = typeof store.dispatch;
-
 import { configureStore } from "@reduxjs/toolkit";
-import { apiSlice } from "@/app/api/apiSlice"; // your RTK Query api
-import authReducer from "./features/authSlice";
-import notificationReducer from "./features/notificationSlice";
-import dataReducer from "./features/dataSlice";
+import authReducer from "./redux/features/authSlice";
+import notificationReducer from "./redux/features/notificationSlice";
+import dataReducer from "./redux/features/dataSlice";
+import { api } from "../lib/redux/features/baseApi"; // ✅ import your base API
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     notification: notificationReducer,
     data: dataReducer,
-    [apiSlice.reducerPath]: apiSlice.reducer, // Add RTK Query reducer
+    [api.reducerPath]: api.reducer, // ✅ use the base API reducer
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(apiSlice.middleware), // Add RTK Query middleware
+    getDefaultMiddleware().concat(api.middleware), // ✅ add RTK Query middleware
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+

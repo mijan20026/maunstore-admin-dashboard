@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
-import { deleteBanner, updateBanner } from '@/lib/features/dataSlice';
+import { deleteBanner, updateBanner } from '@/lib/redux/features/dataSlice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

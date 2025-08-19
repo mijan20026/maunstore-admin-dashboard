@@ -24,7 +24,7 @@ import {
   addNotification,
   markAsRead,
   markAllAsRead,
-} from "@/lib/features/notificationSlice";
+} from "@/lib/redux/features/notificationSlice";
 import LogoutButton from "./logoutButton";
 
 export function Navbar() {
