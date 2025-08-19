@@ -12,9 +12,8 @@ import { useLoginMutation } from "../api/apiSlice"; // RTK Query login mutation
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../api/authSlice"; // Redux slice to store token
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react"; // Toggle icons
 
-export default function LoginForm() {
+export default function ForgotPassword() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { toast, ToastContainer } = useToast();
@@ -23,7 +22,6 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -57,7 +55,9 @@ export default function LoginForm() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Login</CardTitle>
+          <CardTitle className="text-2xl text-center">
+            Forgot Password
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,33 +73,9 @@ export default function LoginForm() {
               />
             </div>
 
-            <div className="relative">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-400"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-
-            <div className="flex justify-end">
-              <Link href="/forgotPassword" className="mb-4">
-                Forgot Password
-              </Link>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+            {/* <Button type="submit" className="w-full" disabled={loading}> */}
+            <Button className="w-full" disabled={loading}>
+              <a href="verifyOtp">{loading ? "Sending OTP..." : "Send OTP"}</a>
             </Button>
           </form>
         </CardContent>

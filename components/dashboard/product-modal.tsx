@@ -205,7 +205,6 @@ export function ProductModal({
             </div>
           </div>
         )}
-
         <Separator />
 
         {/* Basic Information */}

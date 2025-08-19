@@ -114,12 +114,6 @@ export default function ProductsPage() {
       </div>
 
       <Card>
-        {/* <CardHeader>
-          <CardTitle>Products </CardTitle>
-          <CardDescription>
-            A list of all products in your inventory.
-          </CardDescription>
-        </CardHeader> */}
         <CardContent>
           {filteredProducts.length === 0 ? (
             <div className="text-center py-8">
