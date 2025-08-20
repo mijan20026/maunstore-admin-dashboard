@@ -33,10 +33,13 @@ export default function LoginForm() {
       const result = await login({ email, password }).unwrap();
       console.log(result);
       dispatch(setCredentials(result));
-      // localStorage.setItem("accessToken", result.token);
-      Cookies.set("token", result.token, { expires: 1 }); // 1 day
+      localStorage.setItem("accessToken", result.data.token);
+    
+      console.log(result.data.token);
+
+      // Cookies.set("token", result.token, { expires: 1 }); // 1 day
       toast({ title: "Login successful!" });
-      router.replace("/dashboard/products");
+      router.push("/dashboard/products");
     } catch (error: any) {
       toast({
         title: "Login failed",

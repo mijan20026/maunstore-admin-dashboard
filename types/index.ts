@@ -1,10 +1,9 @@
-export interface Brand {
-  id: string;
+interface Brand {
+  _id: string;
+  id?: string;
   name: string;
-  description: string;
+  description?: string;
   image?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface Category {
@@ -27,30 +26,43 @@ export interface SubCategory {
 }
 
 export interface Product {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   price: number;
-  categoryId: string;
-  subCategoryId: string;
-  brandId?: string;
-  sizes: string[];
-  colors: string[];
+  category: {
+    _id: string;
+    name: string;
+    description: string;
+    image: string;
+    brandId: string;
+    createdAt: string;
+    updatedAt: string;
+  };
   images: string[];
   stock: number;
   createdAt: string;
   updatedAt: string;
-  // Specification fields
+  // Watch-specific fields
   gender?: string;
-  modelNo?: string;
+  modelNumber?: string;
+  
   movement?: string;
   caseDiameter?: string;
   caseThickness?: string;
+  // Optional fields that might not be in API response
+  id?: string;
+  categoryId?: string;
+  subCategoryId?: string;
+  brandId?: string;
+  sizes?: string[];
+  colors?: string[];
+  modelNo?: string;
   specifications?: Record<string, string>;
 }
 
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   role: 'admin' | 'user';

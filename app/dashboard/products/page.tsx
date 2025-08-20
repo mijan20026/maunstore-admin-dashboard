@@ -1,17 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
-import { deleteProduct } from "@/lib/redux/features/dataSlice";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,17 +17,95 @@ import {
 } from "@/components/ui/table";
 import { Plus, Edit, Trash2, Eye, Search } from "lucide-react";
 import { ProductModal } from "@/components/dashboard/product-modal";
-import { Product } from "@/types";
 import Image from "next/image";
+import {
+  useGetProductsQuery,
+  useDeleteProductMutation,
+} from "@/lib/redux/apiSlice/productsApi";
+
+// Updated Product interface to match API response
+export interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: {
+    _id: string;
+    name: string;
+    description: string;
+    image: string;
+    brandId: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  images: string[];
+  stock: number;
+  createdAt: string;
+  updatedAt: string;
+  // Watch-specific fields
+  gender?: string;
+  modelNumber?: string;
+  movement?: string;
+  caseDiameter?: string;
+  caseThickness?: string;
+  // Optional fields
+  id?: string;
+  categoryId?: string;
+  subCategoryId?: string;
+  brandId?: string;
+  sizes?: string[];
+  colors?: string[];
+  modelNo?: string;
+  specifications?: Record<string, string>;
+}
+
+// Brand interface
+interface Brand {
+  _id: string;
+  id?: string;
+  name: string;
+  description?: string;
+  image?: string;
+}
+
+// API Response interface
+interface ProductsApiResponse {
+  success: boolean;
+  message: string;
+  statusCode: number;
+  data: {
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPage: number;
+    };
+    data: Product[];
+  };
+}
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
-  const dispatch = useDispatch();
-  const products = useSelector((state: RootState) => state.data.products);
-  const brands = useSelector((state: RootState) => state.data.brands);
+
+  const brands = useSelector(
+    (state: RootState) => state.data.brands as Brand[]
+  );
+
+  const { data, error, isLoading } = useGetProductsQuery() as {
+    data: ProductsApiResponse | undefined;
+    error: any;
+    isLoading: boolean;
+  };
+
+  const [deleteProduct] = useDeleteProductMutation(); // ✅ new mutation
+
+  const products = data?.data?.data || [];
+
+  if (isLoading) return <p>Loading products...</p>;
+  if (error) return <p>Error fetching products</p>;
 
   const handleAdd = () => {
     setEditingProduct(null);
@@ -56,7 +127,13 @@ export default function ProductsPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      dispatch(deleteProduct(id));
+      try {
+        await deleteProduct(id).unwrap();
+        alert("Product deleted successfully ✅");
+      } catch (err) {
+        console.error("Delete failed:", err);
+        alert("Failed to delete product ❌");
+      }
     }
   };
 
@@ -65,15 +142,18 @@ export default function ProductsPage() {
     setEditingProduct(null);
   };
 
-  const getBrandName = (brandId: string) => {
-    const brand = brands.find((brand) => brand.id === brandId);
-    return brand ? brand.name : "Unknown Brand";
+  const getBrandName = (brandId?: string) => {
+    if (!brandId || !brands) return "Unknown Brand";
+    const brand = brands.find(
+      (brand) => brand._id === brandId || brand.id === brandId
+    );
+    return brand?.name || "Unknown Brand";
   };
 
   const filteredProducts = products.filter(
     (product: Product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product?.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -137,7 +217,7 @@ export default function ProductsPage() {
                 <TableRow>
                   <TableHead>Image</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Brand</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
@@ -147,13 +227,13 @@ export default function ProductsPage() {
               </TableHeader>
               <TableBody>
                 {filteredProducts.map((product: Product) => (
-                  <TableRow key={product.id}>
+                  <TableRow key={product._id}>
                     <TableCell>
                       <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                         {product.images && product.images.length > 0 ? (
                           <Image
                             src={product.images[0]}
-                            alt={product.name}
+                            alt={product.name || "Product"}
                             height={100}
                             width={100}
                             className="w-full h-full object-cover"
@@ -173,13 +253,19 @@ export default function ProductsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{getBrandName(product.brandId || "")}</TableCell>
+                    <TableCell>
+                      {product.category?.name || "Unknown Category"}
+                    </TableCell>
                     <TableCell className="font-medium">
-                      ${product.price}
+                      ${product.price?.toFixed(2)}
                     </TableCell>
                     <TableCell>{product.stock} units</TableCell>
                     <TableCell>
-                      {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                      <Badge
+                        variant={product.stock > 0 ? "default" : "destructive"}
+                      >
+                        {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(product.createdAt).toLocaleDateString()}
@@ -190,6 +276,7 @@ export default function ProductsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(product)}
+                          title="View Product"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -197,13 +284,15 @@ export default function ProductsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(product)}
+                          title="Edit Product"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(product.id)}
+                          onClick={() => handleDelete(product._id)}
+                          title="Delete Product"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

@@ -5,13 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/store";
 import { deleteUser } from "@/lib/redux/features/dataSlice";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,9 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Edit, Trash2, Eye, Search, UserPlus } from "lucide-react";
+import { Edit, Trash2, Eye, Search } from "lucide-react";
 import { UserModal } from "@/components/dashboard/user-modal";
 import { User } from "@/types";
+import { useGetUsersQuery } from "@/lib/redux/apiSlice/usersApi";
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +28,18 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
   const dispatch = useDispatch();
-  const users = useSelector((state: RootState) => state.data.users);
+  // const users = useSelector((state: RootState) => state.data.users);
+
+  // ✅ Fixed hook usage
+  const { data, error, isLoading } = useGetUsersQuery();
+
+  // const fetchedUsers = data?.data?.data || [];
+  const users = data?.data?.data || [];
+
+  if (isLoading) return <p>Loading users...</p>;
+  if (error) return <p>Error fetching users</p>;
+
+  // console.log("Fetched Users:", users);
 
   const filteredUsers = users.filter(
     (user: User) =>
@@ -72,8 +78,6 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* <div className="flex items-center justify-start"></div> */}
-
       <UserModal
         isOpen={showModal}
         onClose={handleModalClose}
@@ -103,12 +107,6 @@ export default function UsersPage() {
       </div>
 
       <Card>
-        {/* <CardHeader>
-          <CardTitle>Users </CardTitle>
-          <CardDescription>
-            A list of all registered users.
-          </CardDescription>
-        </CardHeader> */}
         <CardContent>
           {filteredUsers.length === 0 ? (
             <div className="text-center py-8">
@@ -134,7 +132,7 @@ export default function UsersPage() {
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((user: User) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user._id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-10 w-10">
@@ -149,7 +147,7 @@ export default function UsersPage() {
                         <div>
                           <div className="font-medium">{user.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            ID: {user.id}
+                            ID: {user._id}
                           </div>
                         </div>
                       </div>
@@ -189,7 +187,7 @@ export default function UsersPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDelete(user._id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

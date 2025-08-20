@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const api = createApi({
   reducerPath: "api",
+  tagTypes: ["Products", "Users", "Orders", "Brands"], // ✅ declare allowed tags
   baseQuery: fetchBaseQuery({
     baseUrl: "http://10.10.7.111:5003/api/v1", // Change this to your server URL
     prepareHeaders: (headers: Headers) => {
@@ -17,6 +18,3 @@ export const api = createApi({
   }),
   endpoints: () => ({}), // Will be extended with endpoints
 });
-
-// Exporting image URL separately for reuse in components
-export const imageUrl = "http://10.10.7.111:5003";
