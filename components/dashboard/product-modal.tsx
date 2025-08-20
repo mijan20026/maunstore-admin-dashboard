@@ -1,198 +1,3 @@
-// "use client";
-// import { useState } from "react";
-
-// type Category = {
-//   _id: string;
-//   name: string;
-//   description: string;
-//   image: string;
-//   brandId: string;
-//   createdAt: string;
-//   updatedAt: string;
-// };
-
-// type Product = {
-//   _id?: string;
-//   name: string;
-//   price: number;
-//   stock: number;
-//   description: string;
-//   images: string[];
-//   category: Category;
-//   gender: string;
-//   modelNumber: string;
-//   movement: string;
-//   caseDiameter: string;
-//   caseThickness: string;
-// };
-
-// export default function ProductModal() {
-//   const [isOpen, setIsOpen] = useState(false);
-//   const [product, setProduct] = useState<Partial<Product>>({
-//     category: { _id: "", name: "", description: "", image: "", brandId: "", createdAt: "", updatedAt: "" },
-//     images: [],
-//   });
-
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-//     const { name, value } = e.target;
-
-//     // For nested category fields
-//     if (name.startsWith("category.")) {
-//       const key = name.split(".")[1];
-//       setProduct((prev) => ({
-//         ...prev,
-//         category: { ...prev.category, [key]: value } as Category,
-//       }));
-//     } else if (name === "images") {
-//       setProduct((prev) => ({ ...prev, images: value.split(",") }));
-//     } else if (name === "price" || name === "stock") {
-//       setProduct((prev) => ({ ...prev, [name]: Number(value) }));
-//     } else {
-//       setProduct((prev) => ({ ...prev, [name]: value }));
-//     }
-//   };
-
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     console.log("Product to submit:", product);
-//     // Replace this with your API call:
-//     // fetch("/api/products", { method: "POST", body: JSON.stringify(product) })
-//     setIsOpen(false);
-//   };
-
-//   return (
-//     <>
-//       <button
-//         className="bg-blue-600 text-white px-4 py-2 rounded"
-//         onClick={() => setIsOpen(true)}
-//       >
-//         Create Product
-//       </button>
-
-//       {isOpen && (
-//         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-//           <div className="bg-white rounded-lg w-96 p-6 relative">
-//             <button
-//               className="absolute top-2 right-2 text-gray-500"
-//               onClick={() => setIsOpen(false)}
-//             >
-//               ✕
-//             </button>
-//             <h2 className="text-xl font-bold mb-4">Create Product</h2>
-//             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-//               <input
-//                 type="text"
-//                 name="name"
-//                 placeholder="Product Name"
-//                 value={product.name || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="number"
-//                 name="price"
-//                 placeholder="Price"
-//                 value={product.price || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="number"
-//                 name="stock"
-//                 placeholder="Stock"
-//                 value={product.stock || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <textarea
-//                 name="description"
-//                 placeholder="Description"
-//                 value={product.description || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="text"
-//                 name="gender"
-//                 placeholder="Gender"
-//                 value={product.gender || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="text"
-//                 name="modelNumber"
-//                 placeholder="Model Number"
-//                 value={product.modelNumber || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="text"
-//                 name="movement"
-//                 placeholder="Movement"
-//                 value={product.movement || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="text"
-//                 name="caseDiameter"
-//                 placeholder="Case Diameter"
-//                 value={product.caseDiameter || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="text"
-//                 name="caseThickness"
-//                 placeholder="Case Thickness"
-//                 value={product.caseThickness || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="text"
-//                 name="images"
-//                 placeholder="Images (comma separated URLs)"
-//                 value={product.images?.join(",") || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-
-//               {/* Category Fields */}
-//               <h3 className="font-semibold mt-2">Category</h3>
-//               <input
-//                 type="text"
-//                 name="category.name"
-//                 placeholder="Category Name"
-//                 value={product.category?.name || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-//               <input
-//                 type="text"
-//                 name="category.description"
-//                 placeholder="Category Description"
-//                 value={product.category?.description || ""}
-//                 onChange={handleChange}
-//                 className="border p-2 rounded"
-//               />
-
-//               <button
-//                 type="submit"
-//                 className="bg-green-600 text-white p-2 rounded mt-3"
-//               >
-//                 Submit
-//               </button>
-//             </form>
-//           </div>
-//         </div>
-//       )}
-//     </>
-//   );
-// }
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -237,6 +42,7 @@ interface FormData {
   price: number;
   brandId: string;
   category: string;
+  categoryId: string;
   stock: number;
   images: File[];
   // Specification fields
@@ -255,10 +61,14 @@ export function ProductModal({
 }: ProductModalProps) {
   const dispatch = useDispatch();
   const brands = useSelector((state: RootState) => state.data.brands);
+  const categories = useSelector((state: RootState) => state.data.categories);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState(product?.brandId || "");
+  const [selectedCategory, setSelectedCategory] = useState(
+    product?.category?._id || ""
+  );
 
   // Initialize existing images when product changes
   useEffect(() => {
@@ -271,6 +81,7 @@ export function ProductModal({
     setImageFiles([]);
     // Set selected brand
     setSelectedBrand(product?.brandId || "");
+    setSelectedCategory(product?.category?._id || "");
   }, [product]);
 
   const {
@@ -285,6 +96,7 @@ export function ProductModal({
       description: product?.description || "",
       price: product?.price || 0,
       brandId: product?.brandId || "",
+      categoryId: product?.category?._id || "",
       stock: product?.stock || 0,
       images: [],
       // Specification fields
@@ -319,7 +131,7 @@ export function ProductModal({
       stock: data.stock,
       images: allImages,
       category: product?.category || {
-        _id: "",
+        _id: data.categoryId,
         name: "",
         description: "",
         image: "",
@@ -671,6 +483,34 @@ export function ProductModal({
                     {!selectedBrand && mode === "add" && (
                       <p className="text-sm text-amber-600">
                         Please select a brand
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Category Select */}
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select
+                      value={selectedCategory}
+                      onValueChange={(value) => {
+                        setSelectedCategory(value);
+                        setValue("categoryId", value);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!selectedCategory && mode === "add" && (
+                      <p className="text-sm text-amber-600">
+                        Please select a Category
                       </p>
                     )}
                   </div>
