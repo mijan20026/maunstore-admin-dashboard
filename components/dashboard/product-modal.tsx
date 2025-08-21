@@ -6,6 +6,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { addProduct, updateProduct } from "@/lib/redux/features/dataSlice";
 import {
+  useAddProductMutation,
+  useUpdateProductMutation,
+} from "@/lib/redux/apiSlice/productsApi";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -24,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUpload } from "@/components/dashboard/image-upload";
-import { Product } from "@/types";
+import { Product } from "@/app/dashboard/products/page";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
@@ -70,6 +74,10 @@ export function ProductModal({
     product?.category?._id || ""
   );
 
+  // API mutations
+  const [addProductMutation] = useAddProductMutation();
+  // const [updateProductMutation] = useUpdateProductMutation();
+
   // Initialize existing images when product changes
   useEffect(() => {
     if (product?.images && product.images.length > 0) {
@@ -79,10 +87,27 @@ export function ProductModal({
     }
     // Reset image files when product changes
     setImageFiles([]);
-    // Set selected brand
+    // Set selected brand and category
     setSelectedBrand(product?.brandId || "");
     setSelectedCategory(product?.category?._id || "");
   }, [product]);
+
+  // Debug useEffect to check categories data
+  useEffect(() => {
+    console.log("Categories in ProductModal:", categories);
+    console.log("Categories length:", categories?.length);
+    console.log("Selected category:", selectedCategory);
+
+    // Debug individual categories
+    if (categories && categories.length > 0) {
+      console.log("First category structure:", categories[0]);
+      categories.forEach((cat, index) => {
+        if (!cat._id && !cat.id) {
+          console.warn(`Category at index ${index} is missing ID:`, cat);
+        }
+      });
+    }
+  }, [categories, selectedCategory]);
 
   const {
     register,
@@ -90,6 +115,7 @@ export function ProductModal({
     formState: { errors },
     reset,
     setValue,
+    watch,
   } = useForm<FormData>({
     defaultValues: {
       name: product?.name || "",
@@ -108,6 +134,26 @@ export function ProductModal({
     },
   });
 
+  // Watch form values for real-time updates
+  const watchedCategory = watch("categoryId");
+  const watchedGender = watch("gender");
+
+  useEffect(() => {
+    if (product) {
+      setValue("name", product.name);
+      setValue("description", product.description);
+      setValue("price", product.price);
+      setValue("stock", product.stock);
+      setValue("brandId", product.brandId || "");
+      setValue("categoryId", product.category?._id || "");
+      setValue("gender", product.gender || "");
+      setValue("modelNumber", product.modelNumber || "");
+      setValue("movement", product.movement || "");
+      setValue("caseDiameter", product.caseDiameter || "");
+      setValue("caseThickness", product.caseThickness || "");
+    }
+  }, [product, setValue]);
+
   const handleRemoveExistingImage = (index: number) => {
     setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
@@ -117,54 +163,108 @@ export function ProductModal({
 
     setIsLoading(true);
 
-    // Prepare new image URLs
-    const newImageUrls = imageFiles.map((file) => URL.createObjectURL(file));
+    try {
+      setIsLoading(true);
 
-    // Combine existing and new image URLs
-    const allImages = [...existingImages, ...newImageUrls];
+      // Prepare the product data for API
+      const productPayload = {
+        name: data.name?.trim(),
+        description: data.description?.trim(),
+        price: Number(data.price),
+        stock: Number(data.stock),
+        category: selectedCategory, // Send category ID as string
+        gender: data.gender ? data.gender.toUpperCase() : undefined, // Convert to uppercase as per API requirement
+        modelNumber: data.modelNumber?.trim() || undefined,
+        movement: data.movement?.trim() || undefined,
+        caseDiameter: data.caseDiameter?.trim() || undefined,
+        caseThickness: data.caseThickness?.trim() || undefined,
+        // Images handling might need to be implemented separately
+      };
 
-    const productData: Product = {
-      _id: product?._id || "new",
-      name: data.name,
-      description: data.description,
-      price: data.price,
-      stock: data.stock,
-      images: allImages,
-      category: product?.category || {
-        _id: data.categoryId,
-        name: "",
-        description: "",
-        image: "",
-        brandId: "",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      createdAt: product?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      gender: data.gender,
-      modelNumber: data.modelNumber,
-      movement: data.movement,
-      caseDiameter: data.caseDiameter,
-      caseThickness: data.caseThickness,
-    };
+      console.log("Submitting product payload:", productPayload);
+      console.log("Selected category:", selectedCategory);
+      console.log("Form data:", data);
 
-    if (mode === "edit" && product) {
-      dispatch(updateProduct(productData));
-    } else {
-      dispatch(addProduct(productData));
+      // Validate required fields before submission
+      const validationErrors: string[] = [];
+
+      if (!productPayload.name)
+        validationErrors.push("Product name is required");
+      if (!productPayload.category)
+        validationErrors.push("Category selection is required");
+      if (!productPayload.description)
+        validationErrors.push("Product description is required");
+      if (!productPayload.price || productPayload.price <= 0)
+        validationErrors.push("Price must be greater than 0");
+      if (productPayload.stock < 0)
+        validationErrors.push("Stock cannot be negative");
+
+      if (validationErrors.length > 0) {
+        throw new Error(validationErrors.join(", "));
+      }
+
+      let result;
+
+      if (mode === "edit" && product) {
+        // Update existing product
+        result = await updateProductMutation({
+          id: product._id,
+          updates: productPayload,
+        }).unwrap();
+        console.log("Product updated successfully:", result);
+        alert("✅ Product updated successfully!");
+      } else {
+        // Add new product
+        result = await addProductMutation(productPayload).unwrap();
+        console.log("Product added successfully:", result);
+        alert("✅ Product added successfully!");
+      }
+
+      // Reset form and close modal
+      reset();
+      setImageFiles([]);
+      setExistingImages([]);
+      setSelectedBrand("");
+      setSelectedCategory("");
+      onClose();
+    } catch (error: any) {
+      console.error("Error saving product:", error);
+
+      // Determine error message
+      let errorMessage = "Failed to save product";
+
+      // Handle RTK Query API errors
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+
+        // Optionally handle detailed field errors
+        if (Array.isArray(error.data.error) && error.data.error.length > 0) {
+          const fieldErrors = error.data.error
+            .map((e: any) => e.message)
+            .join("\n");
+          errorMessage += "\n" + fieldErrors;
+        }
+      } else if (error.message) {
+        // JS validation errors
+        errorMessage = error.message;
+      } else if (error.status) {
+        errorMessage = `API Error: ${error.status} - ${
+          error.statusText || "Unknown error"
+        }`;
+      }
+
+      alert(`❌ ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
-    reset();
-    setImageFiles([]);
-    setExistingImages([]);
-    onClose();
   };
 
   const handleClose = () => {
     reset();
     setImageFiles([]);
     setExistingImages([]);
+    setSelectedBrand("");
+    setSelectedCategory("");
     onClose();
   };
 
@@ -184,7 +284,7 @@ export function ProductModal({
   // Get brand name from brand ID
   const getBrandName = (brandId?: string) => {
     if (!brandId) return "N/A";
-    const brand = brands.find((b) => b.id === brandId);
+    const brand = brands.find((b) => b.id === brandId || b._id === brandId);
     return brand ? brand.name : "Unknown Brand";
   };
 
@@ -299,12 +399,14 @@ export function ProductModal({
                     <td className="py-2 px-4">{product.gender}</td>
                   </tr>
                 )}
-                {product.modelNo && (
+                {(product.modelNo || product.modelNumber) && (
                   <tr className="border-b">
                     <td className="py-2 px-4 font-medium bg-gray-50 w-1/3">
                       Model No
                     </td>
-                    <td className="py-2 px-4">{product.modelNo}</td>
+                    <td className="py-2 px-4">
+                      {product.modelNo || product.modelNumber}
+                    </td>
                   </tr>
                 )}
                 {product.movement && (
@@ -335,7 +437,7 @@ export function ProductModal({
                   Object.entries(product.specifications).map(([key, value]) => (
                     <tr key={key} className="border-b">
                       <td className="py-2 px-4 font-medium bg-gray-50 w-1/3">
-                        {key}
+                        {key.charAt(0).toUpperCase() + key.slice(1)}
                       </td>
                       <td className="py-2 px-4">{value}</td>
                     </tr>
@@ -344,37 +446,6 @@ export function ProductModal({
             </table>
           </div>
         </div>
-
-        {/* Sizes and Colors */}
-        <Separator />
-
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {product.sizes && product.sizes.length > 0 && (
-            <div>
-              <h3 className="text-lg font-medium mb-4">Available Sizes</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.sizes.map((size, index) => (
-                  <div key={index} className="px-3 py-1 bg-gray-100 rounded-md text-sm">
-                    {size}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {product.colors && product.colors.length > 0 && (
-            <div>
-              <h3 className="text-lg font-medium mb-4">Available Colors</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.colors.map((color, index) => (
-                  <div key={index} className="px-3 py-1 bg-gray-100 rounded-md text-sm">
-                    {color}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div> */}
       </div>
     );
   };
@@ -418,7 +489,6 @@ export function ProductModal({
                         required: "Product name is required",
                       })}
                       placeholder="Enter product name"
-                      defaultValue={product?.name || ""}
                     />
                     {errors.name && (
                       <p className="text-sm text-red-500">
@@ -433,9 +503,11 @@ export function ProductModal({
                       id="price"
                       type="number"
                       step="0.01"
-                      {...register("price", { required: "Price is required" })}
+                      {...register("price", {
+                        required: "Price is required",
+                        min: { value: 0, message: "Price must be positive" },
+                      })}
                       placeholder="Enter price"
-                      defaultValue={product?.price || ""}
                     />
                     {errors.price && (
                       <p className="text-sm text-red-500">
@@ -449,9 +521,11 @@ export function ProductModal({
                     <Input
                       id="stock"
                       type="number"
-                      {...register("stock", { required: "Stock is required" })}
+                      {...register("stock", {
+                        required: "Stock is required",
+                        min: { value: 0, message: "Stock cannot be negative" },
+                      })}
                       placeholder="Enter stock quantity"
-                      defaultValue={product?.stock || ""}
                     />
                     {errors.stock && (
                       <p className="text-sm text-red-500">
@@ -460,59 +534,75 @@ export function ProductModal({
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Brand</Label>
-                    <Select
-                      value={selectedBrand}
-                      onValueChange={(value) => {
-                        setSelectedBrand(value);
-                        setValue("brandId", value);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Brand" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {brands.map((brand) => (
-                          <SelectItem key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {!selectedBrand && mode === "add" && (
-                      <p className="text-sm text-amber-600">
-                        Please select a brand
-                      </p>
-                    )}
-                  </div>
-
                   {/* Category Select */}
                   <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select
-                      value={selectedCategory}
-                      onValueChange={(value) => {
-                        setSelectedCategory(value);
-                        setValue("categoryId", value);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {!selectedCategory && mode === "add" && (
+                    <Label>Category *</Label>
+                    {categories && categories.length > 0 ? (
+                      <Select
+                        value={selectedCategory}
+                        onValueChange={(value) => {
+                          console.log("Selected category:", value);
+                          // Only update if value is not empty
+                          if (value && value !== "") {
+                            setSelectedCategory(value);
+                            setValue("categoryId", value);
+                            setValue("category", value);
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {
+                            categories
+                              .filter(
+                                (category) =>
+                                  category && (category._id || category.id)
+                              ) // Filter out invalid categories
+                              .map((category, index) => {
+                                const key =
+                                  category._id ||
+                                  category.id ||
+                                  `category-${index}`;
+                                const value = category._id || category.id || "";
+
+                                // Skip if value is empty
+                                if (!value || value === "") {
+                                  console.warn(
+                                    "Skipping category with empty value:",
+                                    category
+                                  );
+                                  return null;
+                                }
+
+                                return (
+                                  <SelectItem key={key} value={value}>
+                                    {category.name || "Unnamed Category"}
+                                  </SelectItem>
+                                );
+                              })
+                              .filter(Boolean) // Remove null values
+                          }
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-500">
+                        {categories === undefined
+                          ? "Loading categories..."
+                          : "No categories available"}
+                      </div>
+                    )}
+                    {!selectedCategory && (
                       <p className="text-sm text-amber-600">
-                        Please select a Category
+                        Please select a category
                       </p>
                     )}
+                    {/* Debug info - remove in production */}
+                    <div className="text-xs text-gray-500">
+                      Categories loaded: {categories ? categories.length : 0}
+                      {selectedCategory && ` | Selected: ${selectedCategory}`}
+                    </div>
                   </div>
                 </div>
 
@@ -525,7 +615,6 @@ export function ProductModal({
                     })}
                     placeholder="Enter product description"
                     rows={3}
-                    defaultValue={product?.description || ""}
                   />
                   {errors.description && (
                     <p className="text-sm text-red-500">
@@ -543,27 +632,29 @@ export function ProductModal({
                   <div className="space-y-2">
                     <Label htmlFor="gender">Gender</Label>
                     <Select
-                      {...register("gender")}
-                      defaultValue={product?.gender || ""}
+                      value={watchedGender}
+                      onValueChange={(value) => {
+                        console.log("Selected gender:", value);
+                        setValue("gender", value);
+                      }}
                     >
                       <SelectTrigger id="gender">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Unisex">Unisex</SelectItem>
+                        <SelectItem value="MALE">Male</SelectItem>
+                        <SelectItem value="FEMALE">Female</SelectItem>
+                        <SelectItem value="UNISEX">Unisex</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="modelNo">Model No</Label>
+                    <Label htmlFor="modelNumber">Model Number</Label>
                     <Input
-                      id="modelNo"
+                      id="modelNumber"
                       {...register("modelNumber")}
                       placeholder="Enter model number"
-                      defaultValue={product?.modelNo || ""}
                     />
                   </div>
 
@@ -573,7 +664,6 @@ export function ProductModal({
                       id="movement"
                       {...register("movement")}
                       placeholder="Enter movement type"
-                      defaultValue={product?.movement || ""}
                     />
                   </div>
 
@@ -582,8 +672,7 @@ export function ProductModal({
                     <Input
                       id="caseDiameter"
                       {...register("caseDiameter")}
-                      placeholder="Enter case diameter"
-                      defaultValue={product?.caseDiameter || ""}
+                      placeholder="Enter case diameter (e.g., 42mm)"
                     />
                   </div>
 
@@ -592,8 +681,7 @@ export function ProductModal({
                     <Input
                       id="caseThickness"
                       {...register("caseThickness")}
-                      placeholder="Enter case thickness"
-                      defaultValue={product?.caseThickness || ""}
+                      placeholder="Enter case thickness (e.g., 10mm)"
                     />
                   </div>
                 </div>
@@ -624,10 +712,7 @@ export function ProductModal({
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isLoading || (!selectedBrand && mode === "add")}
-              >
+              <Button type="submit" disabled={isLoading || !selectedCategory}>
                 {isLoading
                   ? "Saving..."
                   : mode === "edit"

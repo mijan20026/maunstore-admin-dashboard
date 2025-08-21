@@ -22,6 +22,8 @@ import {
   useGetProductsQuery,
   useDeleteProductMutation,
 } from "@/lib/redux/apiSlice/productsApi";
+import AddProductModal from "@/components/dashboard/NewProductModal";
+// import { NewProductModal } from "@/components/dashboard/NewProductModal";
 
 // Updated Product interface to match API response
 export interface Product {
@@ -89,6 +91,16 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
+
+  const [showNewProductModal, setShowNewProductModal] = useState(false);
+
+  const handleNewProductClick = () => {
+    setShowNewProductModal(true);
+  };
+
+  const handleNewModalClose = () => {
+    setShowNewProductModal(false);
+  };
 
   const brands = useSelector(
     (state: RootState) => state.data.brands as Brand[]
@@ -177,6 +189,11 @@ export default function ProductsPage() {
         mode={modalMode}
       />
 
+      {/* <NewProductModal
+        isOpen={showNewProductModal}
+        onClose={handleNewModalClose}
+      /> */}
+
       <div className="flex items-center justify-between space-x-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -191,6 +208,10 @@ export default function ProductsPage() {
           <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
+        {/* <Button onClick={handleNewProductClick}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add New Product
+        </Button> */}
       </div>
 
       <Card>
@@ -305,6 +326,23 @@ export default function ProductsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* <AddProductModal /> */}
+      <div>
+        
+        {/* {
+  "name": "Classic Leather Watch",
+  "price": 159.99,
+  "stock": 50,
+ "description": "A premium quality leather strap watch with stainless steel case and water resistance.",
+  "category": "689c6d3c1de2973dfca2c05e",
+  "gender": "MALE",
+  "modelNumber": "CLW-2025",
+  "movement": "Quartz",
+  "caseDiameter": "42mm",
+  "caseThickness": "10mm"
+} */}
+      </div>
     </div>
   );
 }

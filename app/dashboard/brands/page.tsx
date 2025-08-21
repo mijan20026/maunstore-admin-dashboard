@@ -26,6 +26,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, Eye, Search } from "lucide-react";
 import { CategoryModal } from "@/components/dashboard/category-modal"; // TODO: Rename to BrandModal
 import Image from "next/image";
+import { useGetBrandsQuery } from "@/lib/redux/apiSlice/brandsApi";
+import { useGetCategoriesQuery } from "@/lib/redux/apiSlice/categoriesApi";
+import { useRouter } from "next/navigation"; // App Router
 
 export default function BrandsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -34,8 +37,35 @@ export default function BrandsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("brands");
   const dispatch = useDispatch();
-  const brands = useSelector((state: RootState) => state.data.categories);
-  const categories = useSelector((state: RootState) => state.data.categories); // Assuming same data source for now
+  // const brands = useSelector((state: RootState) => state.data.categories);
+  // const categories = useSelector((state: RootState) => state.data.categories); // Assuming same data source for now
+
+  // Fetch brands
+  const {
+    data: brandsData,
+    error: brandsError,
+    isLoading: brandsLoading,
+  } = useGetBrandsQuery();
+
+  // Fetch categories
+  const {
+    data: categoriesData,
+    error: categoriesError,
+    isLoading: categoriesLoading,
+  } = useGetCategoriesQuery();
+
+  const brands = brandsData?.data?.data || [];
+  // Ensure categories is always an array
+  const categories = Array.isArray(categoriesData?.data)
+    ? categoriesData?.data
+    : Array.isArray(categoriesData?.data?.data)
+    ? categoriesData?.data?.data
+    : [];
+
+  console.log(categories);
+
+  if (brandsLoading || categoriesLoading) return <p>Loading...</p>;
+  if (brandsError || categoriesError) return <p>Error loading data</p>;
 
   const handleAdd = () => {
     setEditingItem(null);
@@ -73,13 +103,14 @@ export default function BrandsPage() {
       brand.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredCategories = categories.filter(
-    (category: any) =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCategories = categories.filter((category: any) =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const currentData = activeTab === "brands" ? filteredBrands : filteredCategories;
-  const currentCount = activeTab === "brands" ? filteredBrands.length : filteredCategories.length;
+  const currentData =
+    activeTab === "brands" ? filteredBrands : filteredCategories;
+  const currentCount =
+    activeTab === "brands" ? filteredBrands.length : filteredCategories.length;
 
   return (
     <div className="space-y-6">
@@ -90,7 +121,11 @@ export default function BrandsPage() {
             <span className="text-primary">({currentCount})</span>
           </h1>
           <p className="text-muted-foreground">
-            Manage your {activeTab === "brands" ? "product brands and their details" : "product categories"}.
+            Manage your{" "}
+            {activeTab === "brands"
+              ? "product brands and their details"
+              : "product categories"}
+            .
           </p>
         </div>
         <div className="flex items-center justify-between space-x-2">
@@ -149,14 +184,14 @@ export default function BrandsPage() {
                       <TableHead>Image</TableHead>
                       <TableHead>Name</TableHead>
                       {/* <TableHead>Description</TableHead> */}
-                      <TableHead>Products</TableHead>
+                      <TableHead>Brands</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredBrands.map((brand: any) => (
-                      <TableRow key={brand.id}>
+                      <TableRow key={brand._id}>
                         <TableCell>
                           <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                             {brand.image ? (
@@ -183,7 +218,9 @@ export default function BrandsPage() {
                           </div>
                         </TableCell> */}
                         <TableCell>
-                          <Badge variant="outline">5 products</Badge>
+                          <Badge variant="outline">
+                            {brand.totalCategories} brands
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(brand.createdAt).toLocaleDateString()}
@@ -207,7 +244,7 @@ export default function BrandsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(brand.id)}
+                              onClick={() => handleDelete(brand._id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -228,7 +265,9 @@ export default function BrandsPage() {
               {filteredCategories.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-4xl mb-4">📂</div>
-                  <h3 className="text-lg font-medium mb-2">No categories found</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    No categories found
+                  </h3>
                   <p className="text-muted-foreground mb-4">
                     {searchTerm
                       ? "Try adjusting your search terms."
@@ -253,7 +292,7 @@ export default function BrandsPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredCategories.map((category: any) => (
-                      <TableRow key={category.id}>
+                      <TableRow key={category._id}>
                         <TableCell>
                           <div className="font-medium">{category.name}</div>
                         </TableCell>

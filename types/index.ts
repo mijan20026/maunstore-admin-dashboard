@@ -1,4 +1,4 @@
-interface Brand {
+export interface Brand {
   _id: string;
   id?: string;
   name: string;
@@ -7,7 +7,7 @@ interface Brand {
 }
 
 export interface Category {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   image?: string;
@@ -46,7 +46,7 @@ export interface Product {
   // Watch-specific fields
   gender?: string;
   modelNumber?: string;
-  
+
   movement?: string;
   caseDiameter?: string;
   caseThickness?: string;
@@ -65,7 +65,7 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
   avatar?: string;
   createdAt: string;
   updatedAt: string;
@@ -112,3 +112,5 @@ export interface News {
   createdAt: string;
   updatedAt: string;
 }
+
+

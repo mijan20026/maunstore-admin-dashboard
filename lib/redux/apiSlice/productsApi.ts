@@ -17,9 +17,32 @@ export interface ProductsApiResponse {
   };
 }
 
+// API request payload for adding/updating products
+export interface ProductPayload {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  category: string; // Category ID as string
+  gender?: string;
+  modelNumber?: string;
+  movement?: string;
+  caseDiameter?: string;
+  caseThickness?: string;
+  images?: string[]; // Array of image URLs
+}
+
+// API response for single product operations
+export interface SingleProductResponse {
+  success: boolean;
+  message: string;
+  statusCode: number;
+  data: Product;
+}
+
 export const productsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ GET ALL
+    // ✅ GET ALL PRODUCTS
     getProducts: builder.query<ProductsApiResponse, void>({
       query: () => ({
         url: "/products",
@@ -28,30 +51,23 @@ export const productsApi = api.injectEndpoints({
       providesTags: ["Products"],
     }),
 
-    // ✅ ADD PRODUCT
-    addProduct: builder.mutation<
-      { success: boolean; message: string; data: Product },
-      Partial<Product>
-    >({
-      query: (newProduct) => ({
-        url: "/products",
-        method: "POST",
-        body: newProduct,
+    // ✅ GET SINGLE PRODUCT
+    getProduct: builder.query<SingleProductResponse, string>({
+      query: (id) => ({
+        url: `/products/${id}`,
+        method: "GET",
       }),
-      invalidatesTags: ["Products"],
+      providesTags: (result, error, id) => [{ type: "Products", id }],
     }),
 
-    // ✅ UPDATE PRODUCT
-    updateProduct: builder.mutation<
-      { success: boolean; message: string; data: Product },
-      { id: string; updates: Partial<Product> }
-    >({
-      query: ({ id, updates }) => ({
-        url: `/products/${id}`,
-        method: "PUT", // or PATCH if your backend uses patch
-        body: updates,
+    // ✅ ADD PRODUCT
+    addProduct: builder.mutation<SingleProductResponse, ProductPayload>({
+      query: (data) => ({
+        url: "/products",
+        method: "POST",
+        body: data,
       }),
-      invalidatesTags: ["Products"],
+      invalidatesTags: ["Products"], // Refresh product list after adding
     }),
 
     // ✅ DELETE PRODUCT
@@ -63,7 +79,18 @@ export const productsApi = api.injectEndpoints({
         url: `/products/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Products"],
+      invalidatesTags: (result, error, id) => [
+        { type: "Products", id },
+        "Products",
+      ],
+      transformResponse: (response: any) => {
+        console.log("Delete Product Response:", response);
+        return response;
+      },
+      transformErrorResponse: (response: any) => {
+        console.error("Delete Product Error:", response);
+        return response;
+      },
     }),
   }),
   overrideExisting: false,
@@ -71,7 +98,7 @@ export const productsApi = api.injectEndpoints({
 
 export const {
   useGetProductsQuery,
+  useGetProductQuery,
   useAddProductMutation,
-  useUpdateProductMutation,
   useDeleteProductMutation,
 } = productsApi;
