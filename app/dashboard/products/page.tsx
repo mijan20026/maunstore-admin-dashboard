@@ -23,6 +23,8 @@ import {
   useDeleteProductMutation,
 } from "@/lib/redux/apiSlice/productsApi";
 import AddProductModal from "@/components/dashboard/NewProductModal";
+import { useGetCategoriesQuery } from "@/lib/redux/apiSlice/categoriesApi";
+import { getImageUrl } from "@/components/dashboard/imageUrl";
 // import { NewProductModal } from "@/components/dashboard/NewProductModal";
 
 // Updated Product interface to match API response
@@ -106,18 +108,40 @@ export default function ProductsPage() {
     (state: RootState) => state.data.brands as Brand[]
   );
 
-  const { data, error, isLoading } = useGetProductsQuery() as {
+  // Categories query
+  const {
+    data: categoriesData,
+    error: categoriesError,
+    isLoading: categoriesLoading,
+  } = useGetCategoriesQuery() as {
     data: ProductsApiResponse | undefined;
     error: any;
     isLoading: boolean;
   };
 
+  const categories = categoriesData?.data || [];
+
+  // Products query
+  const {
+    data: productsData,
+    error: productsError,
+    isLoading: productsLoading,
+  } = useGetProductsQuery() as {
+    data: ProductsApiResponse | undefined;
+    error: any;
+    isLoading: boolean;
+  };
+
+  const products = productsData?.data?.data || [];
+
   const [deleteProduct] = useDeleteProductMutation(); // ✅ new mutation
 
-  const products = data?.data?.data || [];
+  // Handle loading
+  if (categoriesLoading || productsLoading) return <p>Loading...</p>;
 
-  if (isLoading) return <p>Loading products...</p>;
-  if (error) return <p>Error fetching products</p>;
+  // Handle errors
+  if (categoriesError) return <p>Error fetching categories</p>;
+  if (productsError) return <p>Error fetching products</p>;
 
   const handleAdd = () => {
     setEditingProduct(null);
@@ -253,7 +277,7 @@ export default function ProductsPage() {
                       <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                         {product.images && product.images.length > 0 ? (
                           <Image
-                            src={product.images[0]}
+                            src={getImageUrl(product.images[0])}
                             alt={product.name || "Product"}
                             height={100}
                             width={100}
@@ -329,7 +353,6 @@ export default function ProductsPage() {
 
       {/* <AddProductModal /> */}
       <div>
-        
         {/* {
   "name": "Classic Leather Watch",
   "price": 159.99,

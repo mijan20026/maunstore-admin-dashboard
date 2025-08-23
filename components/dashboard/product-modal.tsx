@@ -4,11 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
-import { addProduct, updateProduct } from "@/lib/redux/features/dataSlice";
-import {
-  useAddProductMutation,
-  useUpdateProductMutation,
-} from "@/lib/redux/apiSlice/productsApi";
+import {} from "@/lib/redux/apiSlice/productsApi";
 import {
   Dialog,
   DialogContent,
@@ -29,9 +25,11 @@ import {
 } from "@/components/ui/select";
 import { ImageUpload } from "@/components/dashboard/image-upload";
 import { Product } from "@/app/dashboard/products/page";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
+import { useGetCategoriesQuery } from "@/lib/redux/apiSlice/categoriesApi";
+import { Category } from "@/types/index";
+import { ProductPayload } from "@/lib/redux/apiSlice/productsApi";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -40,16 +38,29 @@ interface ProductModalProps {
   mode: "add" | "edit" | "view";
 }
 
-interface FormData {
+interface ProductFormData {
   name: string;
   description: string;
   price: number;
   brandId: string;
-  category: string;
   categoryId: string;
   stock: number;
   images: File[];
-  // Specification fields
+  gender: string;
+  modelNumber: string;
+  movement: string;
+  caseDiameter: string;
+  caseThickness: string;
+}
+
+interface FormData {
+  name: string;
+  description: string;
+  imageFile?: File;
+  brandId?: string;
+  price: number;
+  categoryId: string;
+  stock: number;
   gender: string;
   modelNumber: string;
   movement: string;
@@ -65,7 +76,6 @@ export function ProductModal({
 }: ProductModalProps) {
   const dispatch = useDispatch();
   const brands = useSelector((state: RootState) => state.data.brands);
-  const categories = useSelector((state: RootState) => state.data.categories);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,40 +84,25 @@ export function ProductModal({
     product?.category?._id || ""
   );
 
-  // API mutations
-  const [addProductMutation] = useAddProductMutation();
-  // const [updateProductMutation] = useUpdateProductMutation();
+  const {
+    data: categoriesData,
+    error: categoriesError,
+    isLoading: categoriesLoading,
+  } = useGetCategoriesQuery() as {
+    data: { data: Category[] } | undefined;
+    error: any;
+    isLoading: boolean;
+  };
 
-  // Initialize existing images when product changes
+  const categories = categoriesData?.data || [];
+
   useEffect(() => {
-    if (product?.images && product.images.length > 0) {
-      setExistingImages(product.images);
-    } else {
-      setExistingImages([]);
-    }
-    // Reset image files when product changes
+    if (product?.images?.length) setExistingImages(product.images);
+    else setExistingImages([]);
     setImageFiles([]);
-    // Set selected brand and category
     setSelectedBrand(product?.brandId || "");
     setSelectedCategory(product?.category?._id || "");
   }, [product]);
-
-  // Debug useEffect to check categories data
-  useEffect(() => {
-    console.log("Categories in ProductModal:", categories);
-    console.log("Categories length:", categories?.length);
-    console.log("Selected category:", selectedCategory);
-
-    // Debug individual categories
-    if (categories && categories.length > 0) {
-      console.log("First category structure:", categories[0]);
-      categories.forEach((cat, index) => {
-        if (!cat._id && !cat.id) {
-          console.warn(`Category at index ${index} is missing ID:`, cat);
-        }
-      });
-    }
-  }, [categories, selectedCategory]);
 
   const {
     register,
@@ -116,7 +111,7 @@ export function ProductModal({
     reset,
     setValue,
     watch,
-  } = useForm<FormData>({
+  } = useForm<ProductFormData>({
     defaultValues: {
       name: product?.name || "",
       description: product?.description || "",
@@ -125,7 +120,6 @@ export function ProductModal({
       categoryId: product?.category?._id || "",
       stock: product?.stock || 0,
       images: [],
-      // Specification fields
       gender: product?.gender || "",
       modelNumber: product?.modelNumber || "",
       movement: product?.movement || "",
@@ -134,7 +128,6 @@ export function ProductModal({
     },
   });
 
-  // Watch form values for real-time updates
   const watchedCategory = watch("categoryId");
   const watchedGender = watch("gender");
 
@@ -156,107 +149,6 @@ export function ProductModal({
 
   const handleRemoveExistingImage = (index: number) => {
     setExistingImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const onSubmit = async (data: FormData) => {
-    if (mode === "view") return;
-
-    setIsLoading(true);
-
-    try {
-      setIsLoading(true);
-
-      // Prepare the product data for API
-      const productPayload = {
-        name: data.name?.trim(),
-        description: data.description?.trim(),
-        price: Number(data.price),
-        stock: Number(data.stock),
-        category: selectedCategory, // Send category ID as string
-        gender: data.gender ? data.gender.toUpperCase() : undefined, // Convert to uppercase as per API requirement
-        modelNumber: data.modelNumber?.trim() || undefined,
-        movement: data.movement?.trim() || undefined,
-        caseDiameter: data.caseDiameter?.trim() || undefined,
-        caseThickness: data.caseThickness?.trim() || undefined,
-        // Images handling might need to be implemented separately
-      };
-
-      console.log("Submitting product payload:", productPayload);
-      console.log("Selected category:", selectedCategory);
-      console.log("Form data:", data);
-
-      // Validate required fields before submission
-      const validationErrors: string[] = [];
-
-      if (!productPayload.name)
-        validationErrors.push("Product name is required");
-      if (!productPayload.category)
-        validationErrors.push("Category selection is required");
-      if (!productPayload.description)
-        validationErrors.push("Product description is required");
-      if (!productPayload.price || productPayload.price <= 0)
-        validationErrors.push("Price must be greater than 0");
-      if (productPayload.stock < 0)
-        validationErrors.push("Stock cannot be negative");
-
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join(", "));
-      }
-
-      let result;
-
-      if (mode === "edit" && product) {
-        // Update existing product
-        result = await updateProductMutation({
-          id: product._id,
-          updates: productPayload,
-        }).unwrap();
-        console.log("Product updated successfully:", result);
-        alert("✅ Product updated successfully!");
-      } else {
-        // Add new product
-        result = await addProductMutation(productPayload).unwrap();
-        console.log("Product added successfully:", result);
-        alert("✅ Product added successfully!");
-      }
-
-      // Reset form and close modal
-      reset();
-      setImageFiles([]);
-      setExistingImages([]);
-      setSelectedBrand("");
-      setSelectedCategory("");
-      onClose();
-    } catch (error: any) {
-      console.error("Error saving product:", error);
-
-      // Determine error message
-      let errorMessage = "Failed to save product";
-
-      // Handle RTK Query API errors
-      if (error?.data?.message) {
-        errorMessage = error.data.message;
-
-        // Optionally handle detailed field errors
-        if (Array.isArray(error.data.error) && error.data.error.length > 0) {
-          const fieldErrors = error.data.error
-            .map((e: any) => e.message)
-            .join("\n");
-          errorMessage += "\n" + fieldErrors;
-        }
-      } else if (error.message) {
-        // JS validation errors
-        errorMessage = error.message;
-      } else if (error.status) {
-        errorMessage = `API Error: ${error.status} - ${
-          error.statusText || "Unknown error"
-        }`;
-      }
-
-      alert(`❌ ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleClose = () => {
@@ -281,21 +173,12 @@ export function ProductModal({
     }
   };
 
-  // Get brand name from brand ID
-  const getBrandName = (brandId?: string) => {
-    if (!brandId) return "N/A";
-    const brand = brands.find((b) => b.id === brandId || b._id === brandId);
-    return brand ? brand.name : "Unknown Brand";
-  };
-
-  // Render product details view
   const renderProductDetails = () => {
     if (!product) return null;
 
     return (
       <div className="space-y-6">
-        {/* Product Images */}
-        {product.images && product.images.length > 0 && (
+        {product.images?.length > 0 && (
           <div>
             <h3 className="text-lg font-medium mb-4">Product Images</h3>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -316,9 +199,9 @@ export function ProductModal({
             </div>
           </div>
         )}
+
         <Separator />
 
-        {/* Basic Information */}
         <div>
           <h3 className="text-lg font-medium mb-4">Basic Information</h3>
           <div className="border rounded-md overflow-hidden">
@@ -350,25 +233,9 @@ export function ProductModal({
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 px-4 font-medium bg-gray-50 w-1/3">
-                    Brand
+                    Category
                   </td>
-                  <td className="py-2 px-4">{getBrandName(product.brandId)}</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 px-4 font-medium bg-gray-50 w-1/3">
-                    Status
-                  </td>
-                  <td className="py-2 px-4">
-                    {product.stock > 0 ? "In Stock" : "Out of Stock"}
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 px-4 font-medium bg-gray-50 w-1/3">
-                    Created Date
-                  </td>
-                  <td className="py-2 px-4">
-                    {new Date(product.createdAt).toLocaleDateString()}
-                  </td>
+                  <td className="py-2 px-4">{product.category?.name}</td>
                 </tr>
                 <tr>
                   <td className="py-2 px-4 font-medium bg-gray-50 w-1/3">
@@ -385,7 +252,6 @@ export function ProductModal({
 
         <Separator />
 
-        {/* Specification Details */}
         <div>
           <h3 className="text-lg font-medium mb-4">Specifications</h3>
           <div className="border rounded-md overflow-hidden">
@@ -450,6 +316,9 @@ export function ProductModal({
     );
   };
 
+  if (categoriesLoading) return <p>Loading...</p>;
+  if (categoriesError) return <p>Error fetching categories</p>;
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -474,7 +343,7 @@ export function ProductModal({
             </div>
           </>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form className="space-y-6">
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4">
@@ -537,72 +406,29 @@ export function ProductModal({
                   {/* Category Select */}
                   <div className="space-y-2">
                     <Label>Category *</Label>
-                    {categories && categories.length > 0 ? (
-                      <Select
-                        value={selectedCategory}
-                        onValueChange={(value) => {
-                          console.log("Selected category:", value);
-                          // Only update if value is not empty
-                          if (value && value !== "") {
-                            setSelectedCategory(value);
-                            setValue("categoryId", value);
-                            setValue("category", value);
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {
-                            categories
-                              .filter(
-                                (category) =>
-                                  category && (category._id || category.id)
-                              ) // Filter out invalid categories
-                              .map((category, index) => {
-                                const key =
-                                  category._id ||
-                                  category.id ||
-                                  `category-${index}`;
-                                const value = category._id || category.id || "";
-
-                                // Skip if value is empty
-                                if (!value || value === "") {
-                                  console.warn(
-                                    "Skipping category with empty value:",
-                                    category
-                                  );
-                                  return null;
-                                }
-
-                                return (
-                                  <SelectItem key={key} value={value}>
-                                    {category.name || "Unnamed Category"}
-                                  </SelectItem>
-                                );
-                              })
-                              .filter(Boolean) // Remove null values
-                          }
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-500">
-                        {categories === undefined
-                          ? "Loading categories..."
-                          : "No categories available"}
-                      </div>
-                    )}
+                    <Select
+                      value={selectedCategory}
+                      onValueChange={(value) => {
+                        setSelectedCategory(value);
+                        setValue("categoryId", value);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category._id} value={category._id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {!selectedCategory && (
                       <p className="text-sm text-amber-600">
                         Please select a category
                       </p>
                     )}
-                    {/* Debug info - remove in production */}
-                    <div className="text-xs text-gray-500">
-                      Categories loaded: {categories ? categories.length : 0}
-                      {selectedCategory && ` | Selected: ${selectedCategory}`}
-                    </div>
                   </div>
                 </div>
 
