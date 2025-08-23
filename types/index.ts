@@ -1,18 +1,20 @@
+// types.ts
 export interface Brand {
   _id: string;
-  id?: string;
   name: string;
   description?: string;
-  image?: string;
+  image?: string; // URL from backend after upload
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Category {
   _id: string;
   name: string;
-  description: string;
-  image?: string;
-  createdAt: string;
-  updatedAt: string;
+  description?: string;
+  image?: string; // URL from backend after upload
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SubCategory {
@@ -112,5 +114,3 @@ export interface News {
   createdAt: string;
   updatedAt: string;
 }
-
-

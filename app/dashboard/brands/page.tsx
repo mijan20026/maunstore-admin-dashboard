@@ -1,17 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/lib/store";
-import { deleteCategory } from "@/lib/redux/features/dataSlice";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,48 +15,36 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, Eye, Search } from "lucide-react";
-import { CategoryModal } from "@/components/dashboard/category-modal"; // TODO: Rename to BrandModal
+import BrandCategoryModal from "@/components/dashboard/BrandCategoryModal";
 import Image from "next/image";
-import { useGetBrandsQuery } from "@/lib/redux/apiSlice/brandsApi";
-import { useGetCategoriesQuery } from "@/lib/redux/apiSlice/categoriesApi";
-import { useRouter } from "next/navigation"; // App Router
+import {
+  useGetBrandsQuery,
+  useDeleteBrandMutation,
+} from "@/lib/redux/apiSlice/brandsApi";
+import {
+  useGetCategoriesQuery,
+  useDeleteCategoryMutation,
+} from "@/lib/redux/apiSlice/categoriesApi";
+import { getImageUrl } from "@/components/dashboard/imageUrl";
 
 export default function BrandsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("brands");
-  const dispatch = useDispatch();
-  // const brands = useSelector((state: RootState) => state.data.categories);
-  // const categories = useSelector((state: RootState) => state.data.categories); // Assuming same data source for now
+  const [activeTab, setActiveTab] = useState<"brands" | "categories">("brands");
 
-  // Fetch brands
-  const {
-    data: brandsData,
-    error: brandsError,
-    isLoading: brandsLoading,
-  } = useGetBrandsQuery();
+  const { data: brandsData, isLoading: brandsLoading } = useGetBrandsQuery();
+  const { data: categoriesData, isLoading: categoriesLoading } =
+    useGetCategoriesQuery();
 
-  // Fetch categories
-  const {
-    data: categoriesData,
-    error: categoriesError,
-    isLoading: categoriesLoading,
-  } = useGetCategoriesQuery();
+  const [deleteBrand] = useDeleteBrandMutation();
+  const [deleteCategory] = useDeleteCategoryMutation();
 
   const brands = brandsData?.data?.data || [];
-  // Ensure categories is always an array
-  const categories = Array.isArray(categoriesData?.data)
-    ? categoriesData?.data
-    : Array.isArray(categoriesData?.data?.data)
-    ? categoriesData?.data?.data
-    : [];
-
-  console.log(categories);
+  const categories = categoriesData?.data || [];
 
   if (brandsLoading || categoriesLoading) return <p>Loading...</p>;
-  if (brandsError || categoriesError) return <p>Error loading data</p>;
 
   const handleAdd = () => {
     setEditingItem(null);
@@ -86,21 +65,20 @@ export default function BrandsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const itemType = activeTab === "brands" ? "brand" : "category";
-    if (confirm(`Are you sure you want to delete this ${itemType}?`)) {
-      dispatch(deleteCategory(id));
+    const type = activeTab === "brands" ? "brand" : "category";
+    if (confirm(`Are you sure you want to delete this ${type}?`)) {
+      if (type === "brand") {
+        await deleteBrand(id);
+      } else {
+        await deleteCategory(id);
+      }
     }
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setEditingItem(null);
   };
 
   const filteredBrands = brands.filter(
     (brand: any) =>
       brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      brand.description.toLowerCase().includes(searchTerm.toLowerCase())
+      brand.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredCategories = categories.filter((category: any) =>
@@ -109,8 +87,8 @@ export default function BrandsPage() {
 
   const currentData =
     activeTab === "brands" ? filteredBrands : filteredCategories;
-  const currentCount =
-    activeTab === "brands" ? filteredBrands.length : filteredCategories.length;
+
+  // console.log(filteredBrands[0].image);
 
   return (
     <div className="space-y-6">
@@ -118,17 +96,10 @@ export default function BrandsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             {activeTab === "brands" ? "Brand" : "Category"} Management{" "}
-            <span className="text-primary">({currentCount})</span>
+            <span className="text-primary">({currentData.length})</span>
           </h1>
-          <p className="text-muted-foreground">
-            Manage your{" "}
-            {activeTab === "brands"
-              ? "product brands and their details"
-              : "product categories"}
-            .
-          </p>
         </div>
-        <div className="flex items-center justify-between space-x-2">
+        <div className="flex items-center space-x-2">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
@@ -145,46 +116,33 @@ export default function BrandsPage() {
         </div>
       </div>
 
-      <CategoryModal
+      <BrandCategoryModal
         isOpen={showModal}
-        onClose={handleModalClose}
-        category={editingItem}
+        onClose={() => setShowModal(false)}
+        item={editingItem}
         mode={modalMode}
+        type={activeTab === "brands" ? "brand" : "category"}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="brands" className="space-y-4">
+        {/* Brands Tab */}
+        <TabsContent value="brands">
           <Card>
             <CardContent>
               {filteredBrands.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">📦</div>
-                  <h3 className="text-lg font-medium mb-2">No brands found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {searchTerm
-                      ? "Try adjusting your search terms."
-                      : "Get started by creating your first brand."}
-                  </p>
-                  {!searchTerm && (
-                    <Button onClick={handleAdd}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Brand
-                    </Button>
-                  )}
-                </div>
+                <p>No brands found.</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Image</TableHead>
                       <TableHead>Name</TableHead>
-                      {/* <TableHead>Description</TableHead> */}
-                      <TableHead>Brands</TableHead>
+                      <TableHead>Categories</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -193,62 +151,47 @@ export default function BrandsPage() {
                     {filteredBrands.map((brand: any) => (
                       <TableRow key={brand._id}>
                         <TableCell>
-                          <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
-                            {brand.image ? (
-                              <Image
-                                src={brand.image}
-                                alt={brand.name}
-                                width={100}
-                                height={100}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                📁
-                              </div>
-                            )}
-                          </div>
+                          {brand.image ? (
+                            <Image
+                              src={getImageUrl(brand.image)}
+                              alt={brand.name}
+                              width={40}
+                              height={40}
+                              className="rounded"
+                            />
+                          ) : (
+                            "📁"
+                          )}
+                        </TableCell>
+                        <TableCell>{brand.name}</TableCell>
+                        <TableCell>
+                          <Badge>{brand.totalCategories} categories</Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium">{brand.name}</div>
-                        </TableCell>
-                        {/* <TableCell>
-                          <div className="text-sm text-muted-foreground max-w-[300px] truncate">
-                            {brand.description}
-                          </div>
-                        </TableCell> */}
-                        <TableCell>
-                          <Badge variant="outline">
-                            {brand.totalCategories} brands
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
                           {new Date(brand.createdAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleView(brand)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(brand)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(brand._id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleView(brand)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(brand)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(brand._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -259,73 +202,70 @@ export default function BrandsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="categories" className="space-y-4">
+        {/* Categories Tab */}
+        <TabsContent value="categories">
           <Card>
             <CardContent>
               {filteredCategories.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">📂</div>
-                  <h3 className="text-lg font-medium mb-2">
-                    No categories found
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    {searchTerm
-                      ? "Try adjusting your search terms."
-                      : "Get started by creating your first category."}
-                  </p>
-                  {!searchTerm && (
-                    <Button onClick={handleAdd}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Category
-                    </Button>
-                  )}
-                </div>
+                <p>No categories found.</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Products</TableHead>
-                      <TableHead>Created</TableHead>
+                      <TableHead>Category Name</TableHead>
+                      <TableHead>Brand Name</TableHead>
+                      <TableHead>Brand Image</TableHead>
+                      {/* <TableHead>Products</TableHead> */}
+                      {/* <TableHead>Created</TableHead> */}
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCategories.map((category: any) => (
                       <TableRow key={category._id}>
+                        <TableCell>{category.name}</TableCell>
+                        <TableCell>{category.brandId?.name}</TableCell>
                         <TableCell>
-                          <div className="font-medium">{category.name}</div>
+                          {category.image ? (
+                            <Image
+                              src={getImageUrl(category.image)}
+                              alt={category.name}
+                              width={40}
+                              height={40}
+                              className="rounded"
+                            />
+                          ) : (
+                            "📁"
+                          )}
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">3 products</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        {/* <TableCell>
+                          <Badge>3 products</Badge>
+                        </TableCell> */}
+                        {/* <TableCell>
                           {new Date(category.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleView(category)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(category)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(category.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        </TableCell> */}
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleView(category)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(category)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(category._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
