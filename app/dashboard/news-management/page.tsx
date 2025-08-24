@@ -1,52 +1,75 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/lib/store';
-import { deleteNews } from '@/lib/redux/features/dataSlice';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
-import { News } from '@/types';
-import { NewsModal } from '@/components/dashboard/news-modal';
-import Image from 'next/image';
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/lib/store";
+import { deleteNews } from "@/lib/redux/features/dataSlice";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Edit, Trash2, Eye, Search } from "lucide-react";
+import { News } from "@/types";
+import { NewsModal } from "@/components/dashboard/news-modal";
+import Image from "next/image";
+import {
+  useGetNewsQuery,
+  useDeleteNewsMutation,
+} from "@/lib/redux/apiSlice/newsApi";
+import { getImageUrl } from "@/components/dashboard/imageUrl";
 
 export default function NewsPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingNews, setEditingNews] = useState<News | null>(null);
-  const [modalMode, setModalMode] = useState<'add' | 'edit' | 'view'>('add');
+  const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
   const dispatch = useDispatch();
-  const news = useSelector((state: RootState) => state.data.news);
+  // const news = useSelector((state: RootState) => state.data.news);
 
-  const filteredNews = news.filter((item: News) =>
+  const { data, error, isLoading } = useGetNewsQuery();
+  const [deleteNews] = useDeleteNewsMutation();
+
+  const news = data?.data?.data || [];
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this news item?")) {
+      await deleteNews({ id }).unwrap();
+    }
+  };
+
+  const filteredNews = news.filter((item) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAdd = () => {
     setEditingNews(null);
-    setModalMode('add');
+    setModalMode("add");
     setShowModal(true);
   };
 
   const handleEdit = (newsItem: News) => {
     setEditingNews(newsItem);
-    setModalMode('edit');
+    setModalMode("edit");
     setShowModal(true);
   };
 
   const handleView = (newsItem: News) => {
     setEditingNews(newsItem);
-    setModalMode('view');
+    setModalMode("view");
     setShowModal(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this news item?')) {
-      dispatch(deleteNews(id));
-    }
   };
 
   const handleModalClose = () => {
@@ -56,19 +79,21 @@ export default function NewsPage() {
 
   // Function to strip HTML tags for preview
   const stripHtml = (html: string) => {
-    return html.replace(/<[^>]+>/g, '');
+    return html.replace(/<[^>]+>/g, "");
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-start">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">News Management <span className="text-primary">({filteredNews.length})</span></h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            News Management{" "}
+            <span className="text-primary">({filteredNews.length})</span>
+          </h1>
           <p className="text-muted-foreground">
             Manage your news articles and announcements.
           </p>
         </div>
-       
       </div>
 
       <NewsModal
@@ -107,7 +132,9 @@ export default function NewsPage() {
               <div className="text-4xl mb-4">📰</div>
               <h3 className="text-lg font-medium mb-2">No news found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first news article.'}
+                {searchTerm
+                  ? "Try adjusting your search terms."
+                  : "Get started by adding your first news article."}
               </p>
               {!searchTerm && (
                 <Button onClick={handleAdd}>
@@ -129,13 +156,13 @@ export default function NewsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredNews.map((newsItem: News) => (
-                  <TableRow key={newsItem.id}>
+                {filteredNews.map((newsItem: News, index: number) => (
+                  <TableRow key={newsItem._id || index}>
                     <TableCell>
                       <div className="w-16 h-12 bg-gray-100 rounded-lg overflow-hidden">
                         {newsItem.image ? (
                           <Image
-                            src={newsItem.image}
+                            src={getImageUrl(newsItem.image)}
                             alt={newsItem.title}
                             width={100}
                             height={100}
@@ -155,7 +182,10 @@ export default function NewsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="max-w-[250px] truncate text-sm text-muted-foreground">
-                        {newsItem.description ? stripHtml(newsItem.description).substring(0, 100) + '...' : 'No description'}
+                        {newsItem.description
+                          ? stripHtml(newsItem.description).substring(0, 100) +
+                            "..."
+                          : "No description"}
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -166,8 +196,8 @@ export default function NewsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleView(newsItem)}
                         >
@@ -183,7 +213,7 @@ export default function NewsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(newsItem.id)}
+                          onClick={() => handleDelete(newsItem._id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

@@ -109,7 +109,7 @@ export interface Banner {
 }
 
 export interface News {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   image?: string;

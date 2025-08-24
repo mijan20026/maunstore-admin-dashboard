@@ -10,6 +10,7 @@ export const api = createApi({
     "Category",
     "Brand",
     "Categories",
+    "News",
   ], // ✅ declare allowed tags
   baseQuery: fetchBaseQuery({
     baseUrl: "http://10.10.7.111:5003/api/v1", // Change this to your server URL
