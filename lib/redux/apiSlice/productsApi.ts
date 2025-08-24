@@ -35,8 +35,17 @@ export interface ProductPayload {
 
 export const productsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getProducts: builder.query<ApiResponse<ProductsApiResponse>, void>({
-      query: () => ({ url: "/products", method: "GET" }),
+    getProducts: builder.query<
+      ApiResponse<ProductsApiResponse>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => {
+        const { page = 1, limit = 10 } = params || {};
+        return {
+          url: `/products?page=${page}&limit=${limit}`,
+          method: "GET",
+        };
+      },
       providesTags: ["Products"],
     }),
 

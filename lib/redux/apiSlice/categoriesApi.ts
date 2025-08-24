@@ -35,7 +35,7 @@ export const categoriesApi = api.injectEndpoints({
           body: formData, // multipart/form-data
         };
       },
-      invalidatesTags: ["Category"],
+      invalidatesTags: ["Category", "Brand"],
     }),
 
     updateCategory: builder.mutation<

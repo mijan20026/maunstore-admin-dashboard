@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -96,6 +96,12 @@ export default function ProductsPage() {
 
   const [showNewProductModal, setShowNewProductModal] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const limit = 10; // items per page
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
   const handleNewProductClick = () => {
     setShowNewProductModal(true);
   };
@@ -126,7 +132,7 @@ export default function ProductsPage() {
     data: productsData,
     error: productsError,
     isLoading: productsLoading,
-  } = useGetProductsQuery() as {
+  } = useGetProductsQuery({ page, limit, search: searchTerm } as { page?: number; limit?: number; search?: string }) as {
     data: ProductsApiResponse | undefined;
     error: any;
     isLoading: boolean;
@@ -347,6 +353,23 @@ export default function ProductsPage() {
                 ))}
               </TableBody>
             </Table>
+          )}
+          {(productsData?.data?.meta?.totalPage ?? 0) > 1 && (
+            <div className="flex justify-end space-x-2 mt-4">
+              {Array.from(
+                { length: productsData?.data?.meta?.totalPage ?? 0 },
+                (_, i) => i + 1
+              ).map((p) => (
+                <Button
+                  key={p}
+                  variant={p === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </Button>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

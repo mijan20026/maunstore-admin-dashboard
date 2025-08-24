@@ -64,13 +64,15 @@ export interface Product {
 }
 
 export interface User {
+  profileImage: string | undefined;
   _id: string;
   name: string;
   email: string;
-  role: "admin" | "user";
+  role: "ADMIN" | "USER";
   avatar?: string;
   createdAt: string;
   updatedAt: string;
+  status: "active" | "inactive"; // 👈 add this
 }
 
 export interface Subscription {

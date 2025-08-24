@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+
 import {
   Table,
   TableBody,
@@ -20,7 +22,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Edit, Trash2, Eye, Search } from "lucide-react";
 import { UserModal } from "@/components/dashboard/user-modal";
 import { User } from "@/types";
-import { useGetUsersQuery } from "@/lib/redux/apiSlice/usersApi";
+import {
+  useGetUsersQuery,
+  useUpdateUserStatusMutation,
+  useDeleteUserMutation,
+} from "@/lib/redux/apiSlice/usersApi";
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,6 +35,8 @@ export default function UsersPage() {
   const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
   const dispatch = useDispatch();
   // const users = useSelector((state: RootState) => state.data.users);
+  const [updateUserStatus] = useUpdateUserStatusMutation();
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
 
   // ✅ Fixed hook usage
   const { data, error, isLoading } = useGetUsersQuery();
@@ -38,8 +46,18 @@ export default function UsersPage() {
 
   if (isLoading) return <p>Loading users...</p>;
   if (error) return <p>Error fetching users</p>;
-
   // console.log("Fetched Users:", users);
+
+  const handleStatusToggle = async (
+    id: string,
+    newStatus: "active" | "inactive"
+  ) => {
+    try {
+      await updateUserStatus({ id, status: newStatus }).unwrap();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    }
+  };
 
   const filteredUsers = users.filter(
     (user: User) =>
@@ -67,7 +85,13 @@ export default function UsersPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      dispatch(deleteUser(id));
+      try {
+        await deleteUser({ id }).unwrap();
+        alert("User deleted successfully!");
+      } catch (err) {
+        console.error("Failed to delete user:", err);
+        alert("Failed to delete user!");
+      }
     }
   };
 
@@ -125,8 +149,8 @@ export default function UsersPage() {
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -156,17 +180,34 @@ export default function UsersPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          user.role === "admin" ? "default" : "secondary"
+                          user.role === "ADMIN" ? "default" : "secondary"
                         }
                       >
                         {user.role}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="default">Active</Badge>
-                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(user.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Badge
+                          variant={
+                            user.status === "active" ? "default" : "destructive"
+                          }
+                        >
+                          {user.status === "active" ? "Active" : "Inactive"}
+                        </Badge>
+                        <Switch
+                          checked={user.status === "active"}
+                          onCheckedChange={(checked) =>
+                            handleStatusToggle(
+                              user._id,
+                              checked ? "active" : "inactive"
+                            )
+                          }
+                        />
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
