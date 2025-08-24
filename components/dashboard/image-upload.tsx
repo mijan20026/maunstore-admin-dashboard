@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { X, Upload, Image as ImageIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { useState, useCallback, useEffect } from "react";
+import { useDropzone } from "react-dropzone";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { X, Upload, Image as ImageIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { getImageUrl } from "./imageUrl";
 
 interface ImageUploadProps {
   value: File[];
@@ -22,7 +23,7 @@ export function ImageUpload({
   value,
   onChange,
   maxFiles = 5,
-  accept = 'image/*',
+  accept = "image/*",
   className,
   existingImages = [],
   onRemoveExisting,
@@ -33,30 +34,33 @@ export function ImageUpload({
   useEffect(() => {
     // Clean up previous preview URLs to avoid memory leaks
     return () => {
-      previews.forEach(preview => URL.revokeObjectURL(preview));
+      previews.forEach((preview) => URL.revokeObjectURL(preview));
     };
   }, []);
 
   useEffect(() => {
     // Generate previews for files when they change
-    const newPreviews = value.map(file => URL.createObjectURL(file));
+    const newPreviews = value.map((file) => URL.createObjectURL(file));
     setPreviews(newPreviews);
 
     return () => {
       // Clean up created object URLs when component unmounts or files change
-      newPreviews.forEach(preview => URL.revokeObjectURL(preview));
+      newPreviews.forEach((preview) => URL.revokeObjectURL(preview));
     };
   }, [value]);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Calculate how many more files we can add
-    const remainingSlots = maxFiles - value.length - existingImages.length;
-    const filesToAdd = acceptedFiles.slice(0, remainingSlots);
-    
-    if (filesToAdd.length > 0) {
-      onChange([...value, ...filesToAdd]);
-    }
-  }, [value, onChange, maxFiles, existingImages.length]);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      // Calculate how many more files we can add
+      const remainingSlots = maxFiles - value.length - existingImages.length;
+      const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+
+      if (filesToAdd.length > 0) {
+        onChange([...value, ...filesToAdd]);
+      }
+    },
+    [value, onChange, maxFiles, existingImages.length]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -75,14 +79,16 @@ export function ImageUpload({
   const isMaxReached = totalImages >= maxFiles;
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       {!isMaxReached && (
         <Card
           {...getRootProps()}
           className={cn(
-            'border-2 border-dashed cursor-pointer transition-colors p-6',
-            isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400',
-            isMaxReached && 'opacity-50 cursor-not-allowed'
+            "border-2 border-dashed cursor-pointer transition-colors p-6",
+            isDragActive
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-300 hover:border-gray-400",
+            isMaxReached && "opacity-50 cursor-not-allowed"
           )}
         >
           <input {...getInputProps()} />
@@ -110,7 +116,7 @@ export function ImageUpload({
             <div key={`existing-${index}`} className="relative group">
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                 <Image
-                  src={image}
+                  src={getImageUrl(image)}
                   alt={`Existing Image ${index + 1}`}
                   height={200}
                   width={200}
@@ -130,18 +136,25 @@ export function ImageUpload({
               )}
             </div>
           ))}
-          
+
+          {/* New Images */}
           {/* New Images */}
           {value.map((_, index) => (
             <div key={`new-${index}`} className="relative group">
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                <Image
-                  src={previews[index]}
-                  alt={`New Image ${index + 1}`}
-                  height={200}
-                  width={200}
-                  className="w-full h-full object-cover"
-                />
+                {previews[index] ? (
+                  <Image
+                    src={previews[index]}
+                    alt={`New Image ${index + 1}`}
+                    height={200}
+                    width={200}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full w-full text-gray-400">
+                    <ImageIcon className="h-6 w-6" />
+                  </div>
+                )}
               </div>
               <Button
                 type="button"
@@ -156,10 +169,11 @@ export function ImageUpload({
           ))}
         </div>
       )}
-      
+
       {isMaxReached && (
         <p className="text-amber-600 text-sm">
-          Maximum number of images reached ({maxFiles}). Remove some images to add more.
+          Maximum number of images reached ({maxFiles}). Remove some images to
+          add more.
         </p>
       )}
     </div>

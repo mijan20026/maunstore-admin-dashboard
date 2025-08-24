@@ -30,6 +30,11 @@ import Image from "next/image";
 import { useGetCategoriesQuery } from "@/lib/redux/apiSlice/categoriesApi";
 import { Category } from "@/types/index";
 import { ProductPayload } from "@/lib/redux/apiSlice/productsApi";
+import {
+  useAddProductMutation,
+  useUpdateProductMutation,
+} from "@/lib/redux/apiSlice/productsApi";
+import { getImageUrl } from "./imageUrl";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -46,7 +51,7 @@ interface ProductFormData {
   categoryId: string;
   stock: number;
   images: File[];
-  gender: string;
+  gender: "MALE" | "FEMALE" | "UNISEX";
   modelNumber: string;
   movement: string;
   caseDiameter: string;
@@ -96,6 +101,9 @@ export function ProductModal({
 
   const categories = categoriesData?.data || [];
 
+  const [addProduct] = useAddProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
+
   useEffect(() => {
     if (product?.images?.length) setExistingImages(product.images);
     else setExistingImages([]);
@@ -120,7 +128,7 @@ export function ProductModal({
       categoryId: product?.category?._id || "",
       stock: product?.stock || 0,
       images: [],
-      gender: product?.gender || "",
+      gender: (product?.gender as "MALE" | "FEMALE" | "UNISEX") || "MALE",
       modelNumber: product?.modelNumber || "",
       movement: product?.movement || "",
       caseDiameter: product?.caseDiameter || "",
@@ -131,6 +139,43 @@ export function ProductModal({
   const watchedCategory = watch("categoryId");
   const watchedGender = watch("gender");
 
+  const onSubmit = async (data: {
+    name: string;
+    price: number;
+    stock: number;
+    description: string;
+    categoryId: string;
+    gender: "MALE" | "FEMALE" | "UNISEX";
+    modelNumber: string;
+    movement: string;
+    caseDiameter: string;
+    caseThickness: string;
+    images?: File[];
+  }) => {
+    try {
+      const payload = {
+        ...data,
+        images: imageFiles, // imageFiles is your File[]
+      };
+
+      if (mode === "edit" && product) {
+        await updateProduct({
+          _id: product._id,
+          ...payload, // payload is ProductPayload
+        }).unwrap();
+      } else {
+        await addProduct(payload).unwrap();
+      }
+
+      // console.log("Product added:", result);
+      reset(); // reset form
+      setImageFiles([]);
+      onClose();
+    } catch (error) {
+      console.error("Error adding product:", error);
+    }
+  };
+
   useEffect(() => {
     if (product) {
       setValue("name", product.name);
@@ -139,7 +184,10 @@ export function ProductModal({
       setValue("stock", product.stock);
       setValue("brandId", product.brandId || "");
       setValue("categoryId", product.category?._id || "");
-      setValue("gender", product.gender || "");
+      setValue(
+        "gender",
+        (product.gender as "MALE" | "FEMALE" | "UNISEX") || ""
+      );
       setValue("modelNumber", product.modelNumber || "");
       setValue("movement", product.movement || "");
       setValue("caseDiameter", product.caseDiameter || "");
@@ -188,7 +236,7 @@ export function ProductModal({
                   className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
                 >
                   <Image
-                    src={image}
+                    src={getImageUrl(image)}
                     alt={`${product.name} ${index + 1}`}
                     width={200}
                     height={200}
@@ -343,7 +391,7 @@ export function ProductModal({
             </div>
           </>
         ) : (
-          <form className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4">
@@ -461,7 +509,13 @@ export function ProductModal({
                       value={watchedGender}
                       onValueChange={(value) => {
                         console.log("Selected gender:", value);
-                        setValue("gender", value);
+                        if (
+                          value === "MALE" ||
+                          value === "FEMALE" ||
+                          value === "UNISEX"
+                        ) {
+                          setValue("gender", value);
+                        }
                       }}
                     >
                       <SelectTrigger id="gender">

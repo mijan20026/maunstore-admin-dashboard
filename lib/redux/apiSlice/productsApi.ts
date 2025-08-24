@@ -1,7 +1,7 @@
+// productsApi.ts
 import { api } from "../features/baseApi";
 import { Product } from "@/app/dashboard/products/page";
 
-// Generic API response wrapper
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -9,7 +9,6 @@ interface ApiResponse<T> {
   data: T;
 }
 
-// API response for multiple products
 export interface ProductsApiResponse {
   meta: {
     page: number;
@@ -20,43 +19,86 @@ export interface ProductsApiResponse {
   data: Product[];
 }
 
-// API payload for creating/updating product
 export interface ProductPayload {
   name: string;
-  description: string;
   price: number;
   stock: number;
-  category: string;
-  brandId?: string;
-  gender?: "MALE" | "FEMALE" | "UNISEX";
+  description: string;
+  categoryId: string; // categoryId
+  gender: "MALE" | "FEMALE" | "UNISEX";
   modelNumber: string;
   movement: string;
   caseDiameter: string;
   caseThickness: string;
-  images?: File[];
+  images: File[]; // uploaded images
 }
 
 export const productsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    // GET all products
     getProducts: builder.query<ApiResponse<ProductsApiResponse>, void>({
       query: () => ({ url: "/products", method: "GET" }),
       providesTags: ["Products"],
     }),
 
-    // GET single product
     getProduct: builder.query<ApiResponse<Product>, string>({
       query: (id) => ({ url: `/products/${id}`, method: "GET" }),
       providesTags: (result, error, id) => [{ type: "Products", id }],
     }),
 
-    // DELETE product
+    addProduct: builder.mutation<ApiResponse<Product>, ProductPayload>({
+      query: (payload) => {
+        const formData = new FormData();
+        const { images, categoryId, ...rest } = payload;
+
+        // Send category instead of categoryId
+        formData.append(
+          "data",
+          JSON.stringify({
+            ...rest,
+            category: categoryId,
+          })
+        );
+
+        images.forEach((file) => formData.append("images", file));
+
+        return {
+          url: "/products",
+          method: "POST",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["Products"],
+    }),
+
+    updateProduct: builder.mutation<
+      ApiResponse<Product>,
+      { _id: string } & ProductPayload
+    >({
+      query: ({ _id, images, categoryId, ...rest }) => {
+        const formData = new FormData();
+
+        formData.append(
+          "data",
+          JSON.stringify({
+            ...rest,
+            category: categoryId,
+          })
+        );
+
+        images.forEach((file) => formData.append("images", file));
+
+        return {
+          url: `/products/${_id}`,
+          method: "PATCH",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["Products"],
+    }),
+
     deleteProduct: builder.mutation<ApiResponse<null>, string>({
       query: (id) => ({ url: `/products/${id}`, method: "DELETE" }),
-      invalidatesTags: (result, error, id) => [
-        { type: "Products", id },
-        "Products",
-      ],
+      invalidatesTags: ["Products"],
     }),
   }),
   overrideExisting: false,
@@ -65,5 +107,7 @@ export const productsApi = api.injectEndpoints({
 export const {
   useGetProductsQuery,
   useGetProductQuery,
+  useAddProductMutation,
+  useUpdateProductMutation,
   useDeleteProductMutation,
 } = productsApi;

@@ -350,22 +350,6 @@ export default function ProductsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* <AddProductModal /> */}
-      <div>
-        {/* {
-  "name": "Classic Leather Watch",
-  "price": 159.99,
-  "stock": 50,
- "description": "A premium quality leather strap watch with stainless steel case and water resistance.",
-  "category": "689c6d3c1de2973dfca2c05e",
-  "gender": "MALE",
-  "modelNumber": "CLW-2025",
-  "movement": "Quartz",
-  "caseDiameter": "42mm",
-  "caseThickness": "10mm"
-} */}
-      </div>
     </div>
   );
 }
