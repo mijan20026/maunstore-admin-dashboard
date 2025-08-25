@@ -208,7 +208,9 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             Product Management{" "}
-            <span className="text-primary">({filteredProducts.length})</span>
+            <span className="text-primary">
+              ({productsData?.data?.meta?.total ?? 0})
+            </span>
           </h1>
           <p className="text-muted-foreground">
             Manage your product catalog and inventory.

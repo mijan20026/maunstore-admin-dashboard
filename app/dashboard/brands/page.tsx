@@ -108,7 +108,11 @@ export default function BrandsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             {activeTab === "brands" ? "Brand" : "Category"} Management{" "}
-            <span className="text-primary">({currentData.length})</span>
+            <span className="text-primary">
+              {activeTab === "brands"
+                ? `(${brandsMeta?.total ?? 0})`
+                : `(${categoriesMeta?.total ?? 0})`}
+            </span>
           </h1>
         </div>
         <div className="flex items-center space-x-2">

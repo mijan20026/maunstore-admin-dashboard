@@ -83,7 +83,7 @@ export default function NewsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             News Management{" "}
-            <span className="text-primary">({filteredNews.length})</span>
+            <span className="text-primary">({meta.total ?? 0})</span>
           </h1>
           <p className="text-muted-foreground">
             Manage your news articles and announcements.

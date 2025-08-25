@@ -115,7 +115,7 @@ export default function UsersPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             User Management{" "}
-            <span className="text-primary">({filteredUsers.length})</span>
+            <span className="text-primary">({meta.total ?? 0})</span>
           </h1>
           <p className="text-muted-foreground">
             Manage user accounts and permissions.
