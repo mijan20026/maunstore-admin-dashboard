@@ -1,3 +1,4 @@
+// lib/redux/features/authApi.ts
 import { api } from "./baseApi";
 
 export const authApi = api.injectEndpoints({
@@ -8,7 +9,6 @@ export const authApi = api.injectEndpoints({
         url: "/auth/verify-email",
         body: data,
       }),
-      // when OTP is verified, save the reset token into localStorage
       async onQueryStarted(arg, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -25,7 +25,7 @@ export const authApi = api.injectEndpoints({
       query: (data) => ({
         method: "POST",
         url: "/auth/resend-otp",
-        body: data, // typically { email: string }
+        body: data,
       }),
     }),
 
@@ -53,7 +53,36 @@ export const authApi = api.injectEndpoints({
           url: "/auth/reset-password",
           body: data,
           headers: {
-            resettoken: token || "",
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
+    // ✅ New endpoints for profile update and change password
+    updateProfile: builder.mutation({
+      query: (data) => {
+        const token = localStorage.getItem("token");
+        return {
+          method: "PUT",
+          url: "/auth/update-profile",
+          body: data,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
+    changePassword: builder.mutation({
+      query: (data) => {
+        const token = localStorage.getItem("token");
+        return {
+          method: "POST",
+          url: "/auth/reset-password",
+          body: data,
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
         };
       },
@@ -67,4 +96,6 @@ export const {
   useLoginMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useUpdateProfileMutation,
+  useChangePasswordMutation,
 } = authApi;

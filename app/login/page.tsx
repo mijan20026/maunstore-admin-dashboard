@@ -12,7 +12,6 @@ import { setCredentials } from "../../lib/redux/features/authSlice";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useLoginMutation } from "../../lib/redux/features/authApi";
-import Cookies from "js-cookie";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -31,13 +30,18 @@ export default function LoginForm() {
 
     try {
       const result = await login({ email, password }).unwrap();
-      console.log(result);
-      dispatch(setCredentials(result));
-      localStorage.setItem("accessToken", result.data.token);
 
-      console.log(result.data.token);
+      // Extract token and user
+      const token = result.data.token;
+      const user = result.data.user;
 
-      // Cookies.set("token", result.token, { expires: 1 }); // 1 day
+      // ✅ Save in Redux
+      dispatch(setCredentials({ user, token }));
+
+      // ✅ Save in localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
       toast({ title: "Login successful!" });
       router.push("/dashboard/products");
     } catch (error: any) {
@@ -81,7 +85,7 @@ export default function LoginForm() {
                 required
               />
               <button
-                type="button" // ✅ prevent submit
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-9 text-gray-400"
               >
@@ -94,7 +98,6 @@ export default function LoginForm() {
             </Button>
           </form>
 
-          {/* Move Forgot Password link outside the form */}
           <div className="flex justify-end mt-2">
             <Link
               href="/forgotPassword"

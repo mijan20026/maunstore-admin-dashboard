@@ -18,6 +18,12 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Save, Upload, Shield, User, FileText, ScrollText } from "lucide-react";
 import dynamic from "next/dynamic";
+import { RootState } from "@/lib/redux/store";
+import { useDispatch, useSelector } from "react-redux"; // ✅ Import this
+import { setCredentials } from "@/lib/redux/features/authSlice";
+
+import { useChangePasswordMutation } from "@/lib/redux/features/authApi";
+import { useToast } from "@/components/ui/use-toast";
 
 // Import Jodit Editor dynamically to avoid SSR issues
 const JoditEditor = dynamic(() => import("jodit-react"), {
@@ -26,8 +32,9 @@ const JoditEditor = dynamic(() => import("jodit-react"), {
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
-    adminEmail: "admin@example.com",
     adminName: "Admin User",
+    adminEmail: "admin@example.com",
+    profileImage: "/placeholder-avatar.jpg", // default
   });
 
   const [privacyPolicy, setPrivacyPolicy] = useState("");
@@ -35,8 +42,51 @@ export default function SettingsPage() {
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+
+  const [changePassword] = useChangePasswordMutation();
+  const { toast } = useToast();
+
   const privacyEditorRef = useRef(null);
   const termsEditorRef = useRef(null);
+
+  const dispatch = useDispatch();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    console.log("localStorage read:", { token, savedUser });
+
+    if (token && savedUser) {
+      dispatch(
+        setCredentials({
+          user: JSON.parse(savedUser),
+          token: token,
+        })
+      );
+    }
+
+    setHydrated(true);
+  }, [dispatch]);
+
+  const user = useSelector((state: any) => state.auth.user);
+  console.log("Hydrated user:", user);
+
+  useEffect(() => {
+    if (user) {
+      setSettings({
+        adminName: user.name || "",
+        adminEmail: user.email || "",
+        profileImage: user.profileImage || "/placeholder-avatar.jpg",
+      });
+    }
+  }, [user]);
 
   // Initialize with default content
   useEffect(() => {
@@ -115,6 +165,42 @@ export default function SettingsPage() {
     setIsTermsModalOpen(false);
   };
 
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast({ title: "All fields are required" });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({ title: "New passwords do not match" });
+      return;
+    }
+
+    setChangePasswordLoading(true);
+    try {
+      const token = localStorage.getItem("token"); // Ensure user is authenticated
+
+      await changePassword({
+        currentPassword,
+        newPassword,
+      }).unwrap();
+
+      toast({ title: "Password updated successfully!" });
+
+      // Clear fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({
+        title: "Failed to update password",
+        description: err?.data?.message || "Something went wrong",
+      });
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="text-center">
@@ -145,9 +231,12 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div className="flex flex-col  gap-4 items-center justify-center">
+                <div className="flex flex-col gap-4 items-center justify-center">
                   <Avatar className="h-32 w-32">
-                    <AvatarImage src="/placeholder-avatar.jpg" alt="Profile" />
+                    <AvatarImage
+                      src={settings.profileImage}
+                      alt={settings.adminName || "Profile"}
+                    />
                     <AvatarFallback>Profile</AvatarFallback>
                   </Avatar>
                   <Button variant="outline">
@@ -235,6 +324,8 @@ export default function SettingsPage() {
                       type="password"
                       placeholder="Enter current password"
                       className="w-1/2"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
                     />
                   </div>
                 </div>
@@ -249,6 +340,8 @@ export default function SettingsPage() {
                       type="password"
                       placeholder="Enter new password"
                       className="w-1/2"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                     />
                   </div>
                 </div>
@@ -265,15 +358,21 @@ export default function SettingsPage() {
                       type="password"
                       placeholder="Confirm new password"
                       className="w-1/2"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-center">
-                <Button className="mt-6 w-1/2">
+                <Button
+                  className="mt-6 w-1/2"
+                  onClick={handleChangePassword}
+                  disabled={changePasswordLoading}
+                >
                   <Save className="mr-2 h-4 w-4" />
-                  Update Password
+                  {changePasswordLoading ? "Updating..." : "Update Password"}
                 </Button>
               </div>
             </CardContent>
