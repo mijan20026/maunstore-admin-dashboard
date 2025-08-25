@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,16 +34,30 @@ export default function BrandsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"brands" | "categories">("brands");
 
-  const { data: brandsData, isLoading: brandsLoading } = useGetBrandsQuery();
+  // ✅ Separate pagination states
+  const [brandPage, setBrandPage] = useState(1);
+  const [categoryPage, setCategoryPage] = useState(1);
+  const limit = 3;
+
+  const { data: brandsData, isLoading: brandsLoading } = useGetBrandsQuery({
+    page: brandPage,
+    limit,
+  });
   const { data: categoriesData, isLoading: categoriesLoading } =
-    useGetCategoriesQuery();
+    useGetCategoriesQuery({
+      page: categoryPage,
+      limit,
+    });
+
+  // Extract brand & category arrays and their meta
+  const brands = brandsData?.data?.data || [];
+  const brandsMeta = brandsData?.data?.meta;
+
+  const categories = categoriesData?.data || [];
+  const categoriesMeta = categoriesData?.data?.meta;
 
   const [deleteBrand] = useDeleteBrandMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
-
-  const brands = brandsData?.data?.data || [];
-  const categories = categoriesData?.data || [];
-
   if (brandsLoading || categoriesLoading) return <p>Loading...</p>;
 
   const handleAdd = () => {
@@ -87,8 +101,6 @@ export default function BrandsPage() {
 
   const currentData =
     activeTab === "brands" ? filteredBrands : filteredCategories;
-
-  // console.log(filteredBrands[0].image);
 
   return (
     <div className="space-y-6">
@@ -198,6 +210,48 @@ export default function BrandsPage() {
                   </TableBody>
                 </Table>
               )}
+
+              {(brandsMeta?.totalPage ?? 0) > 1 && (
+                <div className="flex justify-end items-center space-x-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={brandPage === 1}
+                    onClick={() =>
+                      setBrandPage((prev) => Math.max(prev - 1, 1))
+                    }
+                  >
+                    Previous
+                  </Button>
+
+                  {Array.from(
+                    { length: brandsMeta?.totalPage ?? 0 },
+                    (_, i) => i + 1
+                  ).map((p) => (
+                    <Button
+                      key={p}
+                      variant={p === brandPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBrandPage(p)}
+                    >
+                      {p}
+                    </Button>
+                  ))}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={brandPage === (brandsMeta?.totalPage ?? 1)}
+                    onClick={() =>
+                      setBrandPage((prev) =>
+                        Math.min(prev + 1, brandsMeta?.totalPage ?? 1)
+                      )
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -215,8 +269,6 @@ export default function BrandsPage() {
                       <TableHead>Category Name</TableHead>
                       <TableHead>Brand Name</TableHead>
                       <TableHead>Brand Image</TableHead>
-                      {/* <TableHead>Products</TableHead> */}
-                      {/* <TableHead>Created</TableHead> */}
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -238,12 +290,6 @@ export default function BrandsPage() {
                             "📁"
                           )}
                         </TableCell>
-                        {/* <TableCell>
-                          <Badge>3 products</Badge>
-                        </TableCell> */}
-                        {/* <TableCell>
-                          {new Date(category.createdAt).toLocaleDateString()}
-                        </TableCell> */}
                         <TableCell className="text-right space-x-2">
                           <Button
                             variant="ghost"
@@ -271,6 +317,48 @@ export default function BrandsPage() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+
+              {(categoriesMeta?.totalPage ?? 0) > 1 && (
+                <div className="flex justify-end items-center space-x-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={categoryPage === 1}
+                    onClick={() =>
+                      setCategoryPage((prev) => Math.max(prev - 1, 1))
+                    }
+                  >
+                    Previous
+                  </Button>
+
+                  {Array.from(
+                    { length: categoriesMeta?.totalPage ?? 0 },
+                    (_, i) => i + 1
+                  ).map((p) => (
+                    <Button
+                      key={p}
+                      variant={p === categoryPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCategoryPage(p)}
+                    >
+                      {p}
+                    </Button>
+                  ))}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={categoryPage === (categoriesMeta?.totalPage ?? 1)}
+                    onClick={() =>
+                      setCategoryPage((prev) =>
+                        Math.min(prev + 1, categoriesMeta?.totalPage ?? 1)
+                      )
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>

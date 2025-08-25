@@ -1,4 +1,4 @@
-// usersApi.ts
+// lib/redux/apiSlice/usersApi.ts
 import { api } from "../features/baseApi";
 import { User } from "@/types";
 
@@ -19,10 +19,13 @@ export interface UsersApiResponse {
 
 export const usersApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ Get all users
-    getUsers: builder.query<UsersApiResponse, void>({
-      query: () => ({
-        url: "/users",
+    // ✅ Get all users with pagination
+    getUsers: builder.query<
+      UsersApiResponse,
+      { page?: number; limit?: number } | void
+    >({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: `/users?page=${page}&limit=${limit}`,
         method: "GET",
       }),
       providesTags: ["Users"],
@@ -88,5 +91,5 @@ export const {
   useUpdateUserStatusMutation,
   useUpdateUserMutation,
   useCreateUserMutation,
-  useDeleteUserMutation, // 👈 new hook
+  useDeleteUserMutation,
 } = usersApi;

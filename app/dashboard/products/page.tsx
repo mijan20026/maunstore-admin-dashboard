@@ -119,7 +119,7 @@ export default function ProductsPage() {
     data: categoriesData,
     error: categoriesError,
     isLoading: categoriesLoading,
-  } = useGetCategoriesQuery() as {
+  } = useGetCategoriesQuery({ page, limit }) as {
     data: ProductsApiResponse | undefined;
     error: any;
     isLoading: boolean;
@@ -132,7 +132,11 @@ export default function ProductsPage() {
     data: productsData,
     error: productsError,
     isLoading: productsLoading,
-  } = useGetProductsQuery({ page, limit, search: searchTerm } as { page?: number; limit?: number; search?: string }) as {
+  } = useGetProductsQuery({ page, limit, search: searchTerm } as {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) as {
     data: ProductsApiResponse | undefined;
     error: any;
     isLoading: boolean;
@@ -354,8 +358,20 @@ export default function ProductsPage() {
               </TableBody>
             </Table>
           )}
+
           {(productsData?.data?.meta?.totalPage ?? 0) > 1 && (
-            <div className="flex justify-end space-x-2 mt-4">
+            <div className="flex justify-end items-center space-x-2 mt-4">
+              {/* Previous button */}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 1}
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </Button>
+
+              {/* Page numbers */}
               {Array.from(
                 { length: productsData?.data?.meta?.totalPage ?? 0 },
                 (_, i) => i + 1
@@ -369,6 +385,20 @@ export default function ProductsPage() {
                   {p}
                 </Button>
               ))}
+
+              {/* Next button */}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === (productsData?.data?.meta?.totalPage ?? 1)}
+                onClick={() =>
+                  setPage((prev) =>
+                    Math.min(prev + 1, productsData?.data?.meta?.totalPage ?? 1)
+                  )
+                }
+              >
+                Next
+              </Button>
             </div>
           )}
         </CardContent>

@@ -18,9 +18,12 @@ export interface BrandsApiResponse {
 
 export const brandsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getBrands: builder.query<BrandsApiResponse, void>({
-      query: () => ({
-        url: "/brands",
+    getBrands: builder.query<
+      BrandsApiResponse,
+      { page?: number; limit?: number }
+    >({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: `/brands?page=${page}&limit=${limit}`,
         method: "GET",
       }),
       providesTags: ["Brand"],

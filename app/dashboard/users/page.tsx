@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/lib/store";
-import { deleteUser } from "@/lib/redux/features/dataSlice";
+import { useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,20 +31,24 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
   const dispatch = useDispatch();
-  // const users = useSelector((state: RootState) => state.data.users);
   const [updateUserStatus] = useUpdateUserStatusMutation();
-  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
-  // ✅ Fixed hook usage
-  const { data, error, isLoading } = useGetUsersQuery();
-
-  // const fetchedUsers = data?.data?.data || [];
+  const { data, error, isLoading } = useGetUsersQuery({ page, limit });
   const users = data?.data?.data || [];
+  const meta = data?.data?.meta ?? {
+    page: 1,
+    limit: limit,
+    total: 0,
+    totalPage: 1,
+  };
 
   if (isLoading) return <p>Loading users...</p>;
   if (error) return <p>Error fetching users</p>;
-  // console.log("Fetched Users:", users);
 
   const handleStatusToggle = async (
     id: string,
@@ -128,6 +130,7 @@ export default function UsersPage() {
             className="pl-10"
           />
         </div>
+        <Button onClick={handleAdd}>Add User</Button>
       </div>
 
       <Card>
@@ -143,101 +146,143 @@ export default function UsersPage() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user: User) => (
-                  <TableRow key={user._id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>
-                            {user.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            ID: {user._id}
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user: User) => (
+                    <TableRow key={user._id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>
+                              {user.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{user.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              ID: {user._id}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          user.role === "ADMIN" ? "default" : "secondary"
-                        }
-                      >
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
                         <Badge
                           variant={
-                            user.status === "active" ? "default" : "destructive"
+                            user.role === "ADMIN" ? "default" : "secondary"
                           }
                         >
-                          {user.status === "active" ? "Active" : "Inactive"}
+                          {user.role}
                         </Badge>
-                        <Switch
-                          checked={user.status === "active"}
-                          onCheckedChange={(checked) =>
-                            handleStatusToggle(
-                              user._id,
-                              checked ? "active" : "inactive"
-                            )
-                          }
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(user)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(user)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(user._id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Badge
+                            variant={
+                              user.status === "active"
+                                ? "default"
+                                : "destructive"
+                            }
+                          >
+                            {user.status === "active" ? "Active" : "Inactive"}
+                          </Badge>
+                          <Switch
+                            checked={user.status === "active"}
+                            onCheckedChange={(checked) =>
+                              handleStatusToggle(
+                                user._id,
+                                checked ? "active" : "inactive"
+                              )
+                            }
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleView(user)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(user)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(user._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {meta.totalPage > 1 && (
+                <div className="flex justify-end items-center space-x-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 1}
+                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  >
+                    Previous
+                  </Button>
+
+                  {Array.from({ length: meta.totalPage }, (_, i) => i + 1).map(
+                    (p) => (
+                      <Button
+                        key={p}
+                        variant={p === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(p)}
+                      >
+                        {p}
+                      </Button>
+                    )
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === meta.totalPage}
+                    onClick={() =>
+                      setPage((prev) => Math.min(prev + 1, meta.totalPage))
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

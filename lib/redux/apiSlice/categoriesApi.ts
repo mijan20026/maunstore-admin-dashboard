@@ -1,3 +1,4 @@
+// lib/redux/apiSlice/categoriesApi.ts
 import { api } from "../features/baseApi";
 import { Category } from "@/types";
 
@@ -5,17 +6,29 @@ export interface CategoriesApiResponse {
   success: boolean;
   message: string;
   statusCode: number;
-  data: Category[];
+  data: {
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPage: number;
+    };
+    data: Category[];
+  };
 }
 
 export const categoriesApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getCategories: builder.query<CategoriesApiResponse, void>({
-      query: () => ({
-        url: "/categories",
+    getCategories: builder.query<
+      CategoriesApiResponse,
+      { page?: number; limit?: number } | void
+    >({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        // ✅ add = {} here
+        url: `/categories?page=${page}&limit=${limit}`,
         method: "GET",
       }),
-      providesTags: ["Category"],
+      providesTags: ["Categories"],
     }),
 
     addCategory: builder.mutation<
@@ -32,7 +45,7 @@ export const categoriesApi = api.injectEndpoints({
         return {
           url: "/categories",
           method: "POST",
-          body: formData, // multipart/form-data
+          body: formData,
         };
       },
       invalidatesTags: ["Category", "Brand"],
