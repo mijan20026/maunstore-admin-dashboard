@@ -34,7 +34,7 @@ export const usersApi = api.injectEndpoints({
     // ✅ Update user status (active/inactive toggle)
     updateUserStatus: builder.mutation<
       { success: boolean; message: string; data: User },
-      { id: string; status: "active" | "inactive" }
+      { id: string; status: "ACTIVE" | "INACTIVE" }
     >({
       query: ({ id, status }) => ({
         url: `/users/${id}`,

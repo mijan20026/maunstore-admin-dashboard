@@ -19,24 +19,32 @@ export default function VerifyOtpForm() {
 
   const { toast, ToastContainer } = useToast();
 
-  const [oneTimeCode, setOneTimeCode] = useState(""); // rename from otp
+  const [oneTimeCode, setOneTimeCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
   const [otpVerify] = useOtpVerifyMutation();
   const [resendOtp] = useResendOtpMutation();
 
+  // Verify OTP
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Send the payload the backend expects
-      await otpVerify({ email, oneTimeCode: Number(oneTimeCode) }).unwrap();
+      const result = await otpVerify({
+        email,
+        oneTimeCode: Number(oneTimeCode),
+      }).unwrap();
+
+      // Save reset token from backend response
+      if (result?.data) {
+        localStorage.setItem("resetToken", result.data);
+      }
 
       toast({ title: "OTP verified successfully!" });
 
-      // Redirect to reset password
+      // Redirect to reset password page
       router.push(`/resetPassword?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       toast({
@@ -48,11 +56,15 @@ export default function VerifyOtpForm() {
     }
   };
 
+  // Resend OTP
   const handleResendOtp = async () => {
     setResendLoading(true);
     try {
       await resendOtp({ email }).unwrap();
-      toast({ title: "OTP resent successfully!" });
+      toast({
+        title: "OTP resent successfully!",
+        description: "Check your email for the new OTP.",
+      });
     } catch (error: any) {
       toast({
         title: "Failed to resend OTP",

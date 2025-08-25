@@ -31,6 +31,15 @@ export const categoriesApi = api.injectEndpoints({
       providesTags: ["Categories"],
     }),
 
+    // New query to fetch all categories without pagination
+    getAllCategories: builder.query<CategoriesApiResponse, void>({
+      query: () => ({
+        url: `/categories?limit=1000`, // assuming 1000 is enough to get all categories
+        method: "GET",
+      }),
+      providesTags: ["Categories"],
+    }),
+
     addCategory: builder.mutation<
       Category,
       { name: string; description: string; imageFile: File; brandId: string }
@@ -89,6 +98,7 @@ export const categoriesApi = api.injectEndpoints({
 
 export const {
   useGetCategoriesQuery,
+  useGetAllCategoriesQuery, // ✅ new hook
   useAddCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,

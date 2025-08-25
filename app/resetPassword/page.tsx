@@ -32,7 +32,7 @@ export default function ResetPasswordForm() {
 
     setLoading(true);
     try {
-      // Send the correct payload keys
+      // Call backend (token automatically included from authApi)
       await resetPassword({ newPassword, confirmPassword }).unwrap();
 
       toast({ title: "Password reset successfully!" });

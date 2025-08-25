@@ -23,7 +23,10 @@ import {
   useDeleteProductMutation,
 } from "@/lib/redux/apiSlice/productsApi";
 import AddProductModal from "@/components/dashboard/NewProductModal";
-import { useGetCategoriesQuery } from "@/lib/redux/apiSlice/categoriesApi";
+import {
+  useGetAllCategoriesQuery,
+  useGetCategoriesQuery,
+} from "@/lib/redux/apiSlice/categoriesApi";
 import { getImageUrl } from "@/components/dashboard/imageUrl";
 // import { NewProductModal } from "@/components/dashboard/NewProductModal";
 
@@ -117,15 +120,11 @@ export default function ProductsPage() {
   // Categories query
   const {
     data: categoriesData,
-    error: categoriesError,
     isLoading: categoriesLoading,
-  } = useGetCategoriesQuery({ page, limit }) as {
-    data: ProductsApiResponse | undefined;
-    error: any;
-    isLoading: boolean;
-  };
+    error: categoriesError,
+  } = useGetAllCategoriesQuery();
 
-  const categories = categoriesData?.data || [];
+  const categories = categoriesData?.data?.data ?? [];
 
   // Products query
   const {
@@ -144,7 +143,8 @@ export default function ProductsPage() {
 
   const products = productsData?.data?.data || [];
 
-  const [deleteProduct] = useDeleteProductMutation(); // ✅ new mutation
+  // Delete mutation
+  const [deleteProduct] = useDeleteProductMutation();
 
   // Handle loading
   if (categoriesLoading || productsLoading) return <p>Loading...</p>;

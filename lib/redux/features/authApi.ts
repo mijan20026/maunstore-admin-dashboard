@@ -8,7 +8,19 @@ export const authApi = api.injectEndpoints({
         url: "/auth/verify-email",
         body: data,
       }),
+      // when OTP is verified, save the reset token into localStorage
+      async onQueryStarted(arg, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.data) {
+            localStorage.setItem("resetToken", data.data);
+          }
+        } catch (err) {
+          console.error("OTP verify failed:", err);
+        }
+      },
     }),
+
     resendOtp: builder.mutation({
       query: (data) => ({
         method: "POST",
@@ -16,6 +28,7 @@ export const authApi = api.injectEndpoints({
         body: data, // typically { email: string }
       }),
     }),
+
     login: builder.mutation({
       query: (data) => ({
         method: "POST",
@@ -23,6 +36,7 @@ export const authApi = api.injectEndpoints({
         body: data,
       }),
     }),
+
     forgotPassword: builder.mutation({
       query: (data: { email: string }) => ({
         method: "POST",
@@ -32,11 +46,17 @@ export const authApi = api.injectEndpoints({
     }),
 
     resetPassword: builder.mutation({
-      query: (data) => ({
-        method: "POST",
-        url: "/auth/reset-password",
-        body: data,
-      }),
+      query: (data) => {
+        const token = localStorage.getItem("resetToken");
+        return {
+          method: "POST",
+          url: "/auth/reset-password",
+          body: data,
+          headers: {
+            resettoken: token || "",
+          },
+        };
+      },
     }),
   }),
 });

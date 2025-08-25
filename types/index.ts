@@ -72,7 +72,7 @@ export interface User {
   avatar?: string;
   createdAt: string;
   updatedAt: string;
-  status: "active" | "inactive"; // 👈 add this
+  status: "ACTIVE" | "INACTIVE"; // 👈 add this
 }
 
 export interface Subscription {

@@ -52,7 +52,7 @@ export default function UsersPage() {
 
   const handleStatusToggle = async (
     id: string,
-    newStatus: "active" | "inactive"
+    newStatus: "ACTIVE" | "INACTIVE"
   ) => {
     try {
       await updateUserStatus({ id, status: newStatus }).unwrap();
@@ -111,16 +111,17 @@ export default function UsersPage() {
         mode={modalMode}
       />
 
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          User Management{" "}
+          <span className="text-primary">({meta.total ?? 0})</span>
+        </h1>
+        <p className="text-muted-foreground">
+          Manage user accounts and permissions.
+        </p>
+      </div>
+
       <div className="flex items-center justify-between space-x-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            User Management{" "}
-            <span className="text-primary">({meta.total ?? 0})</span>
-          </h1>
-          <p className="text-muted-foreground">
-            Manage user accounts and permissions.
-          </p>
-        </div>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
@@ -197,19 +198,19 @@ export default function UsersPage() {
                         <div className="flex items-center space-x-2">
                           <Badge
                             variant={
-                              user.status === "active"
+                              user.status === "ACTIVE"
                                 ? "default"
                                 : "destructive"
                             }
                           >
-                            {user.status === "active" ? "Active" : "Inactive"}
+                            {user.status === "ACTIVE" ? "Active" : "Inactive"}
                           </Badge>
                           <Switch
-                            checked={user.status === "active"}
+                            checked={user.status === "ACTIVE"}
                             onCheckedChange={(checked) =>
                               handleStatusToggle(
                                 user._id,
-                                checked ? "active" : "inactive"
+                                checked ? "ACTIVE" : "INACTIVE"
                               )
                             }
                           />
