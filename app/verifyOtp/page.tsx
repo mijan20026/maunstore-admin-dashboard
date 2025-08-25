@@ -1,32 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-// import { useVerifyOtpMutation } from "../api/apiSlice"; // RTK Query mutation
+import {
+  useOtpVerifyMutation,
+  useResendOtpMutation,
+} from "../../lib/redux/features/authApi";
 
 export default function VerifyOtpForm() {
   const router = useRouter();
-  const { toast, ToastContainer } = useToast();
-//   const [verifyOtp] = useVerifyOtpMutation();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") || "";
 
-  const [otp, setOtp] = useState("");
+  const { toast, ToastContainer } = useToast();
+
+  const [oneTimeCode, setOneTimeCode] = useState(""); // rename from otp
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+
+  const [otpVerify] = useOtpVerifyMutation();
+  const [resendOtp] = useResendOtpMutation();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-    //   const result = await verifyOtp({ otp }).unwrap();
+      // Send the payload the backend expects
+      await otpVerify({ email, oneTimeCode: Number(oneTimeCode) }).unwrap();
+
       toast({ title: "OTP verified successfully!" });
 
-      // Redirect to reset password or dashboard
-      router.push("/resetPassword"); 
+      // Redirect to reset password
+      router.push(`/resetPassword?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       toast({
         title: "OTP verification failed",
@@ -34,6 +45,21 @@ export default function VerifyOtpForm() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendLoading(true);
+    try {
+      await resendOtp({ email }).unwrap();
+      toast({ title: "OTP resent successfully!" });
+    } catch (error: any) {
+      toast({
+        title: "Failed to resend OTP",
+        description: error?.data?.message || error.message,
+      });
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -51,8 +77,8 @@ export default function VerifyOtpForm() {
                 id="otp"
                 type="text"
                 placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                value={oneTimeCode}
+                onChange={(e) => setOneTimeCode(e.target.value)}
                 required
               />
             </div>
@@ -62,13 +88,14 @@ export default function VerifyOtpForm() {
             </Button>
 
             <div className="text-center mt-2">
-              <button
+              <Button
                 type="button"
-                className="text-sm text-blue-600 hover:underline"
-                onClick={() => toast({ title: "OTP resent!" })}
+                variant="link"
+                onClick={handleResendOtp}
+                disabled={resendLoading}
               >
-                Resend OTP
-              </button>
+                {resendLoading ? "Resending..." : "Resend OTP"}
+              </Button>
             </div>
           </form>
         </CardContent>

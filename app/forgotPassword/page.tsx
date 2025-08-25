@@ -2,48 +2,39 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "../../components/ui/use-toast";
-import { useLoginMutation } from "../api/apiSlice"; // RTK Query login mutation
-import { useDispatch } from "react-redux";
-import { setCredentials } from "../api/authSlice"; // Redux slice to store token
-import Link from "next/link";
+import { useForgotPasswordMutation } from "../../lib/redux/features/authApi";
 
 export default function ForgotPassword() {
   const router = useRouter();
-  const dispatch = useDispatch();
   const { toast, ToastContainer } = useToast();
 
-  const [login] = useLoginMutation();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [forgotPassword] = useForgotPasswordMutation();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Call the login mutation
-      const result = await login({ email, password }).unwrap();
+      await forgotPassword({ email }).unwrap();
 
-      // Save token in Redux
-      dispatch(setCredentials(result));
+      toast({
+        title: "OTP sent!",
+        description: "Check your email for the one-time passcode (OTP).",
+      });
 
-      // Store token in cookies (for middleware)
-      Cookies.set("token", result.token, { expires: 1 }); // 1 day
-
-      toast({ title: "Login successful!" });
-
-      // Redirect to dashboard
-      router.push("/dashboard/products");
+      // Redirect to OTP verification page
+      router.push(`/verifyOtp?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       toast({
-        title: "Login failed",
+        title: "Failed to send OTP",
         description: error?.data?.message || error.message,
       });
     } finally {
@@ -73,9 +64,8 @@ export default function ForgotPassword() {
               />
             </div>
 
-            {/* <Button type="submit" className="w-full" disabled={loading}> */}
-            <Button className="w-full" disabled={loading}>
-              <a href="verifyOtp">{loading ? "Sending OTP..." : "Send OTP"}</a>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Sending OTP..." : "Send OTP"}
             </Button>
           </form>
         </CardContent>

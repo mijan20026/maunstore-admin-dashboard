@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-// import { useResetPasswordMutation } from "../api/apiSlice"; // RTK Query mutation
-import { Eye, EyeOff } from "lucide-react"; // For toggle icons
+import { Eye, EyeOff } from "lucide-react";
+import { useResetPasswordMutation } from "../../lib/redux/features/authApi";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
   const { toast, ToastContainer } = useToast();
-  //   const [resetPassword] = useResetPasswordMutation();
+  const [resetPassword] = useResetPasswordMutation();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,7 +32,9 @@ export default function ResetPasswordForm() {
 
     setLoading(true);
     try {
-      //   await resetPassword({ password: newPassword }).unwrap();
+      // Send the correct payload keys
+      await resetPassword({ newPassword, confirmPassword }).unwrap();
+
       toast({ title: "Password reset successfully!" });
 
       // Redirect to login page

@@ -34,7 +34,7 @@ export default function LoginForm() {
       console.log(result);
       dispatch(setCredentials(result));
       localStorage.setItem("accessToken", result.data.token);
-    
+
       console.log(result.data.token);
 
       // Cookies.set("token", result.token, { expires: 1 }); // 1 day

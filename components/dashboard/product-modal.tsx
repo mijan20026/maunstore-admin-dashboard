@@ -93,13 +93,9 @@ export function ProductModal({
     data: categoriesData,
     error: categoriesError,
     isLoading: categoriesLoading,
-  } = useGetCategoriesQuery() as {
-    data: { data: Category[] } | undefined;
-    error: any;
-    isLoading: boolean;
-  };
+  } = useGetCategoriesQuery();
 
-  const categories = categoriesData?.data || [];
+  const categories: Category[] = categoriesData?.data?.data ?? [];
 
   const [addProduct] = useAddProductMutation();
   const [updateProduct] = useUpdateProductMutation();

@@ -5,8 +5,15 @@ export const authApi = api.injectEndpoints({
     otpVerify: builder.mutation({
       query: (data) => ({
         method: "POST",
-        url: "/auth/otp-verify",
+        url: "/auth/verify-email",
         body: data,
+      }),
+    }),
+    resendOtp: builder.mutation({
+      query: (data) => ({
+        method: "POST",
+        url: "/auth/resend-otp",
+        body: data, // typically { email: string }
       }),
     }),
     login: builder.mutation({
@@ -17,12 +24,13 @@ export const authApi = api.injectEndpoints({
       }),
     }),
     forgotPassword: builder.mutation({
-      query: (data) => ({
+      query: (data: { email: string }) => ({
         method: "POST",
-        url: "/auth/forgot-password",
+        url: "/auth/forget-password",
         body: data,
       }),
     }),
+
     resetPassword: builder.mutation({
       query: (data) => ({
         method: "POST",
@@ -35,6 +43,7 @@ export const authApi = api.injectEndpoints({
 
 export const {
   useOtpVerifyMutation,
+  useResendOtpMutation,
   useLoginMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,

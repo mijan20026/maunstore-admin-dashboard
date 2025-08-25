@@ -37,7 +37,7 @@ export default function BrandsPage() {
   // ✅ Separate pagination states
   const [brandPage, setBrandPage] = useState(1);
   const [categoryPage, setCategoryPage] = useState(1);
-  const limit = 3;
+  const limit = 10;
 
   const { data: brandsData, isLoading: brandsLoading } = useGetBrandsQuery({
     page: brandPage,
@@ -53,7 +53,10 @@ export default function BrandsPage() {
   const brands = brandsData?.data?.data || [];
   const brandsMeta = brandsData?.data?.meta;
 
-  const categories = categoriesData?.data || [];
+  const categories = Array.isArray(categoriesData?.data?.data)
+    ? categoriesData.data.data
+    : [];
+
   const categoriesMeta = categoriesData?.data?.meta;
 
   const [deleteBrand] = useDeleteBrandMutation();
@@ -277,48 +280,49 @@ export default function BrandsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCategories.map((category: any) => (
-                      <TableRow key={category._id}>
-                        <TableCell>{category.name}</TableCell>
-                        <TableCell>{category.brandId?.name}</TableCell>
-                        <TableCell>
-                          {category.image ? (
-                            <Image
-                              src={getImageUrl(category.image)}
-                              alt={category.name}
-                              width={40}
-                              height={40}
-                              className="rounded"
-                            />
-                          ) : (
-                            "📁"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleView(category)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(category)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(category._id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {Array.isArray(filteredCategories) &&
+                      filteredCategories.map((category: any) => (
+                        <TableRow key={category._id}>
+                          <TableCell>{category.name}</TableCell>
+                          <TableCell>{category.brandId?.name}</TableCell>
+                          <TableCell>
+                            {category.brandId?.image ? (
+                              <Image
+                                src={getImageUrl(category.brandId.image)}
+                                alt={category.brandId.name}
+                                width={40}
+                                height={40}
+                                className="rounded"
+                              />
+                            ) : (
+                              "📁"
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleView(category)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(category)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(category._id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               )}
