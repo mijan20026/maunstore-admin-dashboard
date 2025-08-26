@@ -27,6 +27,7 @@ import {
 import dynamic from "next/dynamic";
 import {
   useGetProfileQuery,
+  useUpdatePasswordMutation,
   useUpdateProfileMutation,
 } from "@/lib/redux/apiSlice/settingsApi";
 import { getImageUrl } from "@/components/dashboard/imageUrl";
@@ -38,6 +39,39 @@ const JoditEditor = dynamic(() => import("jodit-react"), {
 
 export default function SettingsPage() {
   const { data: profileData, isLoading, refetch } = useGetProfileQuery();
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatePassword, { isLoading: isUpdatingPassword }] =
+    useUpdatePasswordMutation();
+
+  const handlePasswordUpdate = async () => {
+    if (newPassword !== confirmPassword) {
+      alert("New password and confirm password do not match");
+      return;
+    }
+
+    try {
+      // Call RTK Query mutation
+      await updatePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      }).unwrap();
+
+      // Success feedback
+      alert("Password updated successfully!");
+
+      // Clear form fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      console.error("Password update error:", err);
+      alert(err?.data?.message || "Failed to update password");
+    }
+  };
 
   // 👇 optional: always force refetch on mount
   useEffect(() => {
@@ -283,7 +317,7 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription>Update your account password</CardDescription>
             </CardHeader>
-            <CardContent className="">
+            <CardContent>
               <div className="flex justify-center">
                 <div className="space-y-5 w-full md:w-1/2">
                   {[
@@ -292,18 +326,24 @@ export default function SettingsPage() {
                       state: showCurrentPassword,
                       setState: setShowCurrentPassword,
                       id: "currentPassword",
+                      value: currentPassword,
+                      setValue: setCurrentPassword,
                     },
                     {
                       label: "New Password",
                       state: showNewPassword,
                       setState: setShowNewPassword,
                       id: "newPassword",
+                      value: newPassword,
+                      setValue: setNewPassword,
                     },
                     {
                       label: "Confirm New Password",
                       state: showConfirmPassword,
                       setState: setShowConfirmPassword,
                       id: "confirmPassword",
+                      value: confirmPassword,
+                      setValue: setConfirmPassword,
                     },
                   ].map((field) => (
                     <div key={field.id} className="space-y-2">
@@ -315,6 +355,8 @@ export default function SettingsPage() {
                           id={field.id}
                           type={field.state ? "text" : "password"}
                           placeholder={field.label}
+                          value={field.value}
+                          onChange={(e) => field.setValue(e.target.value)}
                           className="w-full pr-10"
                         />
                         <button
@@ -331,9 +373,38 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex justify-center">
-                <Button className="mt-6 w-1/2">
-                  <Save className="mr-2 h-4 w-4" />
-                  Update Password
+                <Button
+                  className="mt-6 w-1/2"
+                  onClick={async () => {
+                    if (newPassword !== confirmPassword) {
+                      alert("New password and confirm password do not match");
+                      return;
+                    }
+
+                    try {
+                      await updatePassword({
+                        currentPassword,
+                        newPassword,
+                        confirmPassword,
+                      }).unwrap();
+
+                      alert("Password updated successfully!");
+                      setCurrentPassword("");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    } catch (err: any) {
+                      console.error("Password update error:", err);
+                      alert(err?.data?.message || "Failed to update password");
+                    }
+                  }}
+                >
+                  {isUpdatingPassword ? (
+                    "Updating..."
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" /> Update Password
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>

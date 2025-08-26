@@ -116,3 +116,23 @@ export interface News {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  timestamp: string;
+  isAdmin: boolean;
+}
+
+export interface ChatSession {
+  id: string;
+  userName: string;
+  userEmail: string;
+  avatar?: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+  status: "active" | "waiting" | "closed";
+}

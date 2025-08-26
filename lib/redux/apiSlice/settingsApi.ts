@@ -1,3 +1,4 @@
+// lib/redux/apiSlice/settingsApi.ts
 import { api } from "../features/baseApi";
 
 export interface UserProfile {
@@ -30,12 +31,19 @@ export interface UpdateProfilePayload {
   enterprise?: string;
 }
 
+export interface UpdatePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export const settingsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfileResponse, void>({
       query: () => ({ url: "/users/profile", method: "GET" }),
       providesTags: ["Profile"],
     }),
+
     updateProfile: builder.mutation<UserProfileResponse, UpdateProfilePayload>({
       query: (payload) => {
         const formData = new FormData();
@@ -43,7 +51,7 @@ export const settingsApi = api.injectEndpoints({
 
         Object.entries(rest).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            formData.append(key, String(value)); // safer
+            formData.append(key, String(value));
           }
         });
 
@@ -57,10 +65,31 @@ export const settingsApi = api.injectEndpoints({
           body: formData,
         };
       },
-      invalidatesTags: ["Profile"], // will only work if declared in baseApi
+      invalidatesTags: ["Profile"],
+    }),
+
+    updatePassword: builder.mutation<
+      UserProfileResponse,
+      UpdatePasswordPayload
+    >({
+      query: (data) => {
+        const token = localStorage.getItem("accessToken");
+        return {
+          url: "/auth/change-password",
+          method: "POST",
+          body: data,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetProfileQuery, useUpdateProfileMutation } = settingsApi;
+export const {
+  useGetProfileQuery,
+  useUpdateProfileMutation,
+  useUpdatePasswordMutation,
+} = settingsApi;
