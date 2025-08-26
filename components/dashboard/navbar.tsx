@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Settings, LogOut, User } from "lucide-react";
+import { Bell, Settings, User } from "lucide-react";
 import { socketService } from "@/lib/socket";
 import {
   addNotification,
@@ -26,14 +26,19 @@ import {
   markAllAsRead,
 } from "@/lib/redux/features/notificationSlice";
 import LogoutButton from "./logoutButton";
+import { useGetProfileQuery } from "@/lib/redux/apiSlice/settingsApi";
 
 export function Navbar() {
   const dispatch = useDispatch();
   const { notifications, unreadCount } = useSelector(
     (state: RootState) => state.notification
   );
-  const { user } = useSelector((state: RootState) => state.auth);
-  console.log("Navbar user:", user);
+
+  // ✅ Fetch logged-in user profile
+  const { data: profileData, isLoading, refetch } = useGetProfileQuery();
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   useEffect(() => {
     const socket = socketService.getSocket();
@@ -138,22 +143,24 @@ export function Navbar() {
                 <Avatar className="h-8 w-8">
                   <AvatarImage
                     src={
-                      user?.profileImage
-                        ? user.profileImage.startsWith("http")
-                          ? user.profileImage
-                          : `http://10.10.7.111:5003/${user.profileImage}` // same base URL as your API
+                      profileData?.data?.profileImage
+                        ? profileData.data.profileImage.startsWith("http")
+                          ? profileData.data.profileImage
+                          : `http://10.10.7.111:5003${profileData.data.profileImage}`
                         : undefined
                     }
-                    alt={user?.name || "User"}
+                    alt={profileData?.data?.name || "User"}
                   />
                   <AvatarFallback>
-                    {user?.name
+                    {profileData?.data?.name
                       ?.split(" ")
-                      .map((n: any[]) => n[0])
+                      .map((n) => n[0])
                       .join("") || "AD"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:block">{user?.name || "Admin"}</span>
+                <span className="hidden sm:block">
+                  {profileData?.data?.name || "Admin"}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -167,7 +174,6 @@ export function Navbar() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600">
-                {/* <LogOut className="mr-2 h-4 w-4" /> */}
                 <LogoutButton />
               </DropdownMenuItem>
             </DropdownMenuContent>
