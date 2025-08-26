@@ -263,7 +263,7 @@ export default function SupportPage() {
             <>
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3"> 
                     <Avatar className="h-8 w-8">
                       <AvatarImage
                         src={selectedChat.avatar}
