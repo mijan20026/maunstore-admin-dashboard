@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "../../components/ui/use-toast";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../lib/redux/features/authSlice";
+import { api } from "../../lib/redux/features/baseApi"; // ✅ import baseApi
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useLoginMutation } from "../../lib/redux/features/authApi";
@@ -38,9 +39,12 @@ export default function LoginForm() {
       // ✅ Save in Redux
       dispatch(setCredentials({ user, token }));
 
-      // ✅ Save in localStorage
-      localStorage.setItem("token", token);
+      // ✅ Save in localStorage for API usage
+      localStorage.setItem("accessToken", token);
       localStorage.setItem("user", JSON.stringify(user));
+
+      // ✅ Reset RTK Query cache so profile refetches with the new token
+      dispatch(api.util.invalidateTags(["Profile"]));
 
       toast({ title: "Login successful!" });
       router.push("/dashboard/products");

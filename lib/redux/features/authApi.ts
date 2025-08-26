@@ -1,5 +1,6 @@
 // lib/redux/features/authApi.ts
 import { api } from "./baseApi";
+import { setCredentials } from "./authSlice"; // ✅ import authSlice
 
 export const authApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -35,6 +36,26 @@ export const authApi = api.injectEndpoints({
         url: "/auth/login",
         body: data,
       }),
+      async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+        // ✅ added dispatch
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.data?.accessToken && data?.data?.user) {
+            // Save token in localStorage
+            localStorage.setItem("accessToken", data.data.accessToken);
+
+            // ✅ Update Redux with logged-in user
+            dispatch(
+              setCredentials({
+                user: data.data.user,
+                token: data.data.accessToken,
+              })
+            );
+          }
+        } catch (err) {
+          console.error("Login failed:", err);
+        }
+      },
     }),
 
     forgotPassword: builder.mutation({
@@ -58,35 +79,6 @@ export const authApi = api.injectEndpoints({
         };
       },
     }),
-
-    // ✅ New endpoints for profile update and change password
-    updateProfile: builder.mutation({
-      query: (data) => {
-        const token = localStorage.getItem("token");
-        return {
-          method: "PUT",
-          url: "/auth/update-profile",
-          body: data,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        };
-      },
-    }),
-
-    changePassword: builder.mutation({
-      query: (data) => {
-        const token = localStorage.getItem("token");
-        return {
-          method: "POST",
-          url: "/auth/reset-password",
-          body: data,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        };
-      },
-    }),
   }),
 });
 
@@ -96,6 +88,4 @@ export const {
   useLoginMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
-  useUpdateProfileMutation,
-  useChangePasswordMutation,
 } = authApi;

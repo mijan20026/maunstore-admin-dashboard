@@ -33,6 +33,7 @@ export function Navbar() {
     (state: RootState) => state.notification
   );
   const { user } = useSelector((state: RootState) => state.auth);
+  console.log("Navbar user:", user);
 
   useEffect(() => {
     const socket = socketService.getSocket();
@@ -135,11 +136,20 @@ export function Navbar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.avatar} alt={user?.name} />
+                  <AvatarImage
+                    src={
+                      user?.profileImage
+                        ? user.profileImage.startsWith("http")
+                          ? user.profileImage
+                          : `http://10.10.7.111:5003/${user.profileImage}` // same base URL as your API
+                        : undefined
+                    }
+                    alt={user?.name || "User"}
+                  />
                   <AvatarFallback>
                     {user?.name
                       ?.split(" ")
-                      .map((n: string) => n[0])
+                      .map((n: any[]) => n[0])
                       .join("") || "AD"}
                   </AvatarFallback>
                 </Avatar>

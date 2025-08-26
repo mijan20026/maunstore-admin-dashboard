@@ -64,6 +64,15 @@ const mockChatSessions: ChatSession[] = [
     unreadCount: 0,
     status: "closed",
   },
+  {
+    id: "4",
+    userName: "Johnson",
+    userEmail: "mike@example.com",
+    lastMessage: "Thank you for your help!",
+    lastMessageTime: "1 hour ago",
+    unreadCount: 10,
+    status: "closed",
+  },
 ];
 
 const mockMessages: Message[] = [
