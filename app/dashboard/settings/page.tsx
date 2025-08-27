@@ -277,12 +277,13 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         setSettings({ ...settings, email: e.target.value })
                       }
+                      disabled
                     />
                   </div>
                 </div>
 
                 {/* Optional fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="phoneNumber">Phone Number</Label>
                     <Input
@@ -294,7 +295,7 @@ export default function SettingsPage() {
                     <Label htmlFor="address">Address</Label>
                     <Input id="address" placeholder="Enter your address" />
                   </div>
-                </div>
+                </div> */}
 
                 {/* Save Button */}
                 <div className="flex justify-center">

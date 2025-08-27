@@ -1,6 +1,6 @@
 export const getImageUrl = (path?: string): string => {
   if (!path) {
-    return "https://i.ibb.co/fYZx5zCP/Region-Gallery-Viewer.png"; // default image
+    return "https://avatar.iran.liara.run/public"; // default image
   }
 
   if (path.startsWith("http://") || path.startsWith("https://")) {
