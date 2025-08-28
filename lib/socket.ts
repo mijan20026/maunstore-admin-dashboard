@@ -50,7 +50,8 @@ class SocketService {
   connect(): Socket {
     if (!this.socket) {
       this.socket = io(
-        process.env.NEXT_PUBLIC_SOCKET_URL || "http://10.10.7.111:5003",
+        process.env.NEXT_PUBLIC_SOCKET_URL ||
+          "https://moshfiqur5000.binarybards.online",
         {
           autoConnect: true,
         }
