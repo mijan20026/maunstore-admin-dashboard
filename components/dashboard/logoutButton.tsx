@@ -22,7 +22,8 @@ export default function LogoutButton() {
     Cookies.remove("token");
 
     // 4. Remove token from localStorage
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("resetToken"); // optional
 
     // 4. Redirect to login page
     router.push("/login");
