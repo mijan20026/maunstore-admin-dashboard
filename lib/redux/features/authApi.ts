@@ -17,7 +17,7 @@ export const authApi = api.injectEndpoints({
             localStorage.setItem("resetToken", data.data);
           }
         } catch (err) {
-          console.error("OTP verify failed:", err);
+          // console.error("OTP verify failed:", err);
         }
       },
     }),
@@ -37,23 +37,19 @@ export const authApi = api.injectEndpoints({
         body: data,
       }),
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
-        // ✅ added dispatch
         try {
           const { data } = await queryFulfilled;
-          if (data?.data?.accessToken && data?.data?.user) {
-            // Save token in localStorage
-            localStorage.setItem("accessToken", data.data.accessToken);
-
-            // ✅ Update Redux with logged-in user
+          if (data?.token && data?.user) {
+            localStorage.setItem("accessToken", data.token);
             dispatch(
               setCredentials({
-                user: data.data.user,
-                token: data.data.accessToken,
+                user: data.user,
+                token: data.token,
               })
             );
           }
-        } catch (err) {
-          console.error("Login failed:", err);
+        } catch (err: any) {
+          // console.error("Login failed:", err?.data || err);
         }
       },
     }),
@@ -67,14 +63,14 @@ export const authApi = api.injectEndpoints({
     }),
 
     resetPassword: builder.mutation({
-      query: (data) => {
-        const token = localStorage.getItem("resetToken");
+      query: (data: { newPassword: string; confirmPassword: string }) => {
+        const token = localStorage.getItem("resetToken"); // read dynamically
         return {
           method: "POST",
           url: "/auth/reset-password",
           body: data,
           headers: {
-            Authorization: `Bearer ${token}`,
+            resettoken: token || "", // backend expects this
           },
         };
       },

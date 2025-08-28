@@ -8,7 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff } from "lucide-react";
-import { useResetPasswordMutation } from "../../lib/redux/features/authApi";
+import {
+  useOtpVerifyMutation,
+  useResetPasswordMutation,
+} from "../../lib/redux/features/authApi";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -32,7 +35,7 @@ export default function ResetPasswordForm() {
 
     setLoading(true);
     try {
-      // Call backend (token automatically included from authApi)
+      // Call backend with reset token from localStorage
       await resetPassword({ newPassword, confirmPassword }).unwrap();
 
       toast({ title: "Password reset successfully!" });

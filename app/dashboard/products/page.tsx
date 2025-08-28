@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "@/lib/store";
+import { RootState } from "@/lib/redux/store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import {
   useGetCategoriesQuery,
 } from "@/lib/redux/apiSlice/categoriesApi";
 import { getImageUrl } from "@/components/dashboard/imageUrl";
+import { useGetBrandsQuery } from "@/lib/redux/apiSlice/brandsApi";
 // import { NewProductModal } from "@/components/dashboard/NewProductModal";
 
 // Updated Product interface to match API response
@@ -113,9 +114,8 @@ export default function ProductsPage() {
     setShowNewProductModal(false);
   };
 
-  const brands = useSelector(
-    (state: RootState) => state.data.brands as Brand[]
-  );
+  const { data: brandsData } = useGetBrandsQuery({ page: 1, limit: 100 });
+  const brands = brandsData?.data?.data || [];
 
   // Categories query
   const {
@@ -191,7 +191,7 @@ export default function ProductsPage() {
   const getBrandName = (brandId?: string) => {
     if (!brandId || !brands) return "Unknown Brand";
     const brand = brands.find(
-      (brand) => brand._id === brandId || brand.id === brandId
+      (brand) => brand._id === brandId || brand._id === brandId
     );
     return brand?.name || "Unknown Brand";
   };

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 
@@ -12,7 +13,7 @@ interface ImageUploadProps {
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
-  value = [],          // default to empty array
+  value = [], // default to empty array
   existingImages = [], // default to empty array
   maxFiles = 5,
   setFiles,
@@ -30,8 +31,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     accept: { [accept]: [] },
     maxFiles: maxFiles - (value?.length || 0) - (existingImages?.length || 0),
     multiple: true,
-    disabled:
-      (value?.length || 0) + (existingImages?.length || 0) >= maxFiles,
+    disabled: (value?.length || 0) + (existingImages?.length || 0) >= maxFiles,
   });
 
   return (
@@ -44,14 +44,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         <p>Drop the files here ...</p>
       ) : (
         <p>
-          Drag & drop some files here, or click to select files (max{" "}
-          {maxFiles} images)
+          Drag & drop some files here, or click to select files (max {maxFiles}{" "}
+          images)
         </p>
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
         {existingImages?.map((img, idx) => (
-          <img
+          <Image
             key={idx}
             src={img}
             alt={`Existing ${idx}`}
@@ -59,7 +59,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           />
         ))}
         {value?.map((file, idx) => (
-          <img
+          <Image
             key={idx}
             src={URL.createObjectURL(file)}
             alt={`Upload ${idx}`}

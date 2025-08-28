@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
-import { addNews, updateNews } from "@/lib/redux/features/dataSlice";
+// import { addNews, updateNews } from "@/lib/redux/features/dataSlice";
 import {
   Dialog,
   DialogContent,

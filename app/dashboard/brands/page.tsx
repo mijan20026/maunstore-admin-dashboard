@@ -53,9 +53,7 @@ export default function BrandsPage() {
   const brands = brandsData?.data?.data || [];
   const brandsMeta = brandsData?.data?.meta;
 
-  const categories = Array.isArray(categoriesData?.data?.data)
-    ? categoriesData.data.data
-    : [];
+  const categories = categoriesData?.data?.data ?? [];
 
   const categoriesMeta = categoriesData?.data?.meta;
 

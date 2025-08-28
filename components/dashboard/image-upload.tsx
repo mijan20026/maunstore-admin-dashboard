@@ -31,12 +31,23 @@ export function ImageUpload({
   const [previews, setPreviews] = useState<string[]>([]);
 
   // Generate previews for new files
+  // useEffect(() => {
+  //   // Clean up previous preview URLs to avoid memory leaks
+  //   return () => {
+  //     previews.forEach((preview) => URL.revokeObjectURL(preview));
+  //   };
+  // }, []);
+
   useEffect(() => {
-    // Clean up previous preview URLs to avoid memory leaks
+    // Generate previews for files when they change
+    const newPreviews = value.map((file) => URL.createObjectURL(file));
+    setPreviews(newPreviews);
+
     return () => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview));
+      // Clean up created object URLs when component unmounts or files change
+      newPreviews.forEach((preview) => URL.revokeObjectURL(preview));
     };
-  }, []);
+  }, [value]);
 
   useEffect(() => {
     // Generate previews for files when they change

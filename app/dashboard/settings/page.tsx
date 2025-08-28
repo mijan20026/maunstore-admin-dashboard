@@ -123,8 +123,8 @@ export default function SettingsPage() {
       setProfileImageFile(null);
 
       alert("Profile updated successfully!");
-    } catch (err) {
-      console.error("Update failed:", err);
+    } catch (error) {
+      console.error("Update failed:", error);
     }
   };
 
@@ -394,8 +394,13 @@ export default function SettingsPage() {
                       setNewPassword("");
                       setConfirmPassword("");
                     } catch (err: any) {
-                      console.error("Password update error:", err);
-                      alert(err?.data?.message || "Failed to update password");
+                      const message =
+                        err?.data?.message ||
+                        err?.error ||
+                        "Something went wrong";
+
+                      // console.error("Password update error:", message);
+                      alert(message);
                     }
                   }}
                 >

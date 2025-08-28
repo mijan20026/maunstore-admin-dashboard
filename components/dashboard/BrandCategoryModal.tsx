@@ -56,7 +56,7 @@ export default function BrandCategoryModal({
   const [addCategory] = useAddCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
 
-  const { data: brandsData } = useGetBrandsQuery();
+  const { data: brandsData } = useGetBrandsQuery({});
   const brands = brandsData?.data?.data || [];
 
   // Initialize form with defaultValues

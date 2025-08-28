@@ -1,14 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./redux/features/authSlice";
 import notificationReducer from "./redux/features/notificationSlice";
-import dataReducer from "./redux/features/dataSlice";
+// import dataReducer from "./redux/features/dataSlice";
 import { api } from "../lib/redux/features/baseApi"; // ✅ import your base API
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     notification: notificationReducer,
-    data: dataReducer,
+    // data: dataReducer,
     [api.reducerPath]: api.reducer, // ✅ use the base API reducer
   },
   middleware: (getDefaultMiddleware) =>

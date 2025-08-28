@@ -48,10 +48,14 @@ export default function LoginForm() {
 
       toast({ title: "Login successful!" });
       router.push("/dashboard/products");
-    } catch (error: any) {
+    } catch (err: any) {
+      const message =
+        err?.data?.message || err?.error || "Something went wrong";
+
       toast({
         title: "Login failed",
-        description: error?.data?.message || error.message,
+        description: message,
+        // variant: "destructive", // if your toast supports variants
       });
     } finally {
       setLoading(false);

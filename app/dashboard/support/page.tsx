@@ -142,34 +142,34 @@ export default function SupportPage() {
   }, [selectedChat, refetchMessages, loggedInUser._id]);
 
   // Live listener for new messages
-  useEffect(() => {
-    if (!loggedInUser._id || !selectedChat) return;
+  // useEffect(() => {
+  //   if (!loggedInUser._id || !selectedChat) return;
 
-    const socket = socketService.connect();
-    const eventName = `newMessage::${selectedChat.id}`;
+  //   const socket = socketService.connect();
+  //   const eventName = `newMessage::${selectedChat.id}`;
 
-    const listener = (data: any) => {
-      const msg = data.message || data;
+  //   const listener = (data: any) => {
+  //     const msg = data.message || data;
 
-      const formattedMessage: Message = {
-        id: msg._id || Math.random().toString(),
-        chatId: selectedChat.id,
-        senderId: msg.sender?._id || "unknown",
-        senderName: msg.sender?.name || "Unknown",
-        message: msg.text || msg,
-        timestamp: msg.createdAt || new Date().toISOString(),
-        isAdmin: msg.sender?._id === loggedInUser._id,
-      };
+  //     const formattedMessage: Message = {
+  //       id: msg._id || Math.random().toString(),
+  //       chatId: selectedChat.id,
+  //       senderId: msg.sender?._id || "unknown",
+  //       senderName: msg.sender?.name || "Unknown",
+  //       message: msg.text || msg,
+  //       timestamp: msg.createdAt || new Date().toISOString(),
+  //       isAdmin: msg.sender?._id === loggedInUser._id,
+  //     };
 
-      setMessages((prev) => [...prev, formattedMessage]); // ✅ append only new
-    };
+  //     setMessages((prev) => [...prev, formattedMessage]); // ✅ append only new
+  //   };
 
-    socket.on(eventName, listener);
+  //   socket.on(eventName, listener);
 
-    return () => {
-      socket.off(eventName, listener);
-    };
-  }, [loggedInUser._id, selectedChat?.id]);
+  //   return () => {
+  //     socket.off(eventName, listener);
+  //   };
+  // }, [loggedInUser._id, selectedChat?.id]);
 
   const [sendMessageApi, { isLoading: sending }] = useSendMessageMutation();
 

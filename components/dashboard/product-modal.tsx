@@ -35,6 +35,7 @@ import {
   useUpdateProductMutation,
 } from "@/lib/redux/apiSlice/productsApi";
 import { getImageUrl } from "./imageUrl";
+import { useGetBrandsQuery } from "@/lib/redux/apiSlice/brandsApi";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -80,7 +81,17 @@ export function ProductModal({
   mode,
 }: ProductModalProps) {
   const dispatch = useDispatch();
-  const brands = useSelector((state: RootState) => state.data.brands);
+  // const brands = useSelector((state: RootState) => state.data.brands);
+  const {
+    data: brandsData,
+    isLoading: brandsLoading,
+    error: brandsError,
+  } = useGetBrandsQuery({ page: 1, limit: 100 });
+
+  const brands = brandsData?.data?.data || [];
+
+  // Use brands in the Select
+
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
