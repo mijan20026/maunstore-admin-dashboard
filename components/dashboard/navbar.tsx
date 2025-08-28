@@ -27,6 +27,7 @@ import {
 } from "@/lib/redux/features/notificationSlice";
 import LogoutButton from "./logoutButton";
 import { useGetProfileQuery } from "@/lib/redux/apiSlice/settingsApi";
+import Link from "next/link";
 
 export function Navbar() {
   const dispatch = useDispatch();
@@ -164,13 +165,15 @@ export function Navbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
                 Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
+              </DropdownMenuItem> */}
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings" className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600">
