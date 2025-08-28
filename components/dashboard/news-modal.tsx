@@ -24,6 +24,8 @@ import {
   useUpdateNewsMutation,
 } from "@/lib/redux/apiSlice/newsApi";
 
+import { useRef } from "react";
+
 // Dynamically import Jodit Editor to avoid SSR issues
 const JoditEditor = dynamic(() => import("jodit-react"), {
   ssr: false,
@@ -48,6 +50,8 @@ export function NewsModal({ isOpen, onClose, news, mode }: NewsModalProps) {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] = useState("");
+
+  const editor = useRef<any>(null);
 
   const {
     register,
@@ -237,9 +241,10 @@ export function NewsModal({ isOpen, onClose, news, mode }: NewsModalProps) {
             <Label htmlFor="description">News Description</Label>
             <div className="min-h-[300px]">
               <JoditEditor
+                ref={editor}
                 value={content}
                 config={editorConfig}
-                onChange={(newContent) => setContent(newContent)}
+                onBlur={(newContent) => setContent(newContent)}
               />
             </div>
           </div>
