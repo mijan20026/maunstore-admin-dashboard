@@ -25,6 +25,7 @@ import { getImageUrl } from "@/components/dashboard/imageUrl";
 
 interface Message {
   id: string;
+  chatId?: string;
   senderId: string;
   senderName: string;
   message: string;
@@ -38,8 +39,8 @@ interface ChatSession {
   userEmail: string;
   avatar?: string;
   lastMessage: string;
-  lastMessageTime: string; // formatted for display
-  lastMessageDate: Date; // <-- add this raw date for sorting
+  lastMessageTime: string;
+  lastMessageDate: Date;
   unreadCount: number;
   status: "ACTIVE" | "WAITING" | "CLOSED";
 }
@@ -62,8 +63,6 @@ export default function SupportPage() {
     }
   }, []);
 
-  // Map API response to ChatSession[]
-  // 1. Map with raw date
   const chatSessions: ChatSession[] =
     data?.data?.chats.map((chat) => ({
       id: chat._id,
@@ -85,12 +84,11 @@ export default function SupportPage() {
           }),
       lastMessageDate: chat.lastMessage
         ? new Date(chat.lastMessage.updatedAt)
-        : new Date(chat.updatedAt), // raw date for sorting
+        : new Date(chat.updatedAt),
       unreadCount: chat.unreadCount || 0,
       status: chat.status?.toUpperCase() as "ACTIVE" | "WAITING" | "CLOSED",
     })) || [];
 
-  // 2. Sort by raw date (newest first)
   const sortedChatSessions = [...chatSessions].sort(
     (a, b) => b.lastMessageDate.getTime() - a.lastMessageDate.getTime()
   );
@@ -100,12 +98,11 @@ export default function SupportPage() {
   );
 
   const [newMessage, setNewMessage] = useState("");
-  // console.log(newMessage);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  // Fetch messages for selected chat
+
   const { data: messagesData, refetch: refetchMessages } = useGetMessagesQuery(
     selectedChat?.id || "",
     {
@@ -113,57 +110,155 @@ export default function SupportPage() {
     }
   );
 
-  const messages: Message[] =
-    messagesData?.data?.messages.map((msg) => ({
-      id: msg._id,
-      senderId: msg.sender._id,
-      senderName: msg.sender.name,
-      message: msg.text,
-      timestamp: msg.createdAt,
-      isAdmin: msg.sender._id === loggedInUser._id, // now safe
-    })) || [];
+  const [messages, setMessages] = useState<Message[]>([]);
 
-  // const [sendMessageApi, { isLoading: sending }] = useSendMessageMutation();
+  // Load history whenever chat changes
+  useEffect(() => {
+    if (!selectedChat) return;
+
+    const fetchMessages = async () => {
+      const result = await refetchMessages();
+      const history =
+        result.data?.data?.messages.map((msg) => ({
+          id: msg._id,
+          chatId: selectedChat.id,
+          senderId: msg.sender._id,
+          senderName: msg.sender.name,
+          message: msg.text,
+          timestamp: msg.createdAt,
+          isAdmin: msg.sender._id === loggedInUser._id,
+        })) || [];
+
+      const sortMessages = (msgs: Message[]) =>
+        [...msgs].sort(
+          (a, b) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+
+      setMessages(sortMessages(history));
+    };
+
+    fetchMessages();
+  }, [selectedChat, refetchMessages, loggedInUser._id]);
+
+  // Live listener for new messages
+  useEffect(() => {
+    if (!loggedInUser._id || !selectedChat) return;
+
+    const socket = socketService.connect();
+    const eventName = `newMessage::${selectedChat.id}`;
+
+    const listener = (data: any) => {
+      const msg = data.message || data;
+
+      const formattedMessage: Message = {
+        id: msg._id || Math.random().toString(),
+        chatId: selectedChat.id,
+        senderId: msg.sender?._id || "unknown",
+        senderName: msg.sender?.name || "Unknown",
+        message: msg.text || msg,
+        timestamp: msg.createdAt || new Date().toISOString(),
+        isAdmin: msg.sender?._id === loggedInUser._id,
+      };
+
+      setMessages((prev) => [...prev, formattedMessage]); // ✅ append only new
+    };
+
+    socket.on(eventName, listener);
+
+    return () => {
+      socket.off(eventName, listener);
+    };
+  }, [loggedInUser._id, selectedChat?.id]);
+
   const [sendMessageApi, { isLoading: sending }] = useSendMessageMutation();
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const selectedChatRef = useRef<ChatSession | null>(selectedChat);
 
   useEffect(() => {
-    const socket = socketService.getSocket();
-    if (socket) {
-      socket.on("newMessage", (message: Message) => {
-        refetchMessages();
-      });
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
 
-      socket.on("newChatSession", () => {
-        // No need to maintain setChatSessions since we use query
-      });
+  useEffect(() => {
+    if (!loggedInUser._id) return;
 
-      return () => {
-        socket.off("newMessage");
-        socket.off("newChatSession");
+    const socket = socketService.connect();
+    const eventName = `newMessage::${loggedInUser._id}`;
+
+    const listener = (data: any) => {
+      if (!data) {
+        console.warn("Received empty payload from socket");
+        return;
+      }
+
+      // If server sends only the message object directly
+      const chatId = data.chatId || selectedChatRef.current?.id || "unknown";
+      const message = data.message || data; // fallback to data itself
+
+      const formattedMessage: Message = {
+        id: message?._id || Math.random().toString(),
+        chatId,
+        senderId: message?.sender?._id || "unknown",
+        senderName: message?.sender?.name || "Unknown",
+        message: message?.text || message || "No text",
+        timestamp: message?.createdAt || new Date().toISOString(),
+        isAdmin: message?.sender?._id === loggedInUser._id,
       };
-    }
-  }, [refetchMessages]);
+
+      // Append only if it matches the selected chat
+      if (selectedChatRef.current && chatId === selectedChatRef.current.id) {
+        setMessages((prev) => [...prev, formattedMessage]);
+      }
+
+      // Always refresh chat list
+      refetch();
+    };
+
+    socket.on(eventName, listener);
+
+    return () => {
+      socket.off(eventName, listener);
+      socketService.disconnect();
+    };
+  }, [loggedInUser._id, refetch]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedChat) return;
 
+    const messageToSend = newMessage;
+    setNewMessage(""); // clear input
+
     try {
+      // Optimistic UI
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(),
+          chatId: selectedChat.id,
+          senderId: loggedInUser._id || "",
+          senderName: loggedInUser.email || "Me",
+          message: messageToSend,
+          timestamp: new Date().toISOString(),
+          isAdmin: true,
+        },
+      ]);
+
+      // Send via API
       const formData = new FormData();
-      formData.append("data", JSON.stringify({ text: newMessage }));
+      formData.append("data", JSON.stringify({ text: messageToSend }));
 
       const newMsg = await sendMessageApi({
         chatId: selectedChat.id,
         body: formData,
       }).unwrap();
 
-      setNewMessage("");
-      refetchMessages();
+      // Emit via socket with chatId
+      socketService.getSocket()?.emit("sendMessage", {
+        chatId: selectedChat.id,
+        text: newMsg.text,
+      });
 
-      // update selected chat’s lastMessageDate so sorting pushes it to top
+      // Update selected chat lastMessage
       setSelectedChat((prev) =>
         prev
           ? {
@@ -171,25 +266,25 @@ export default function SupportPage() {
               lastMessage: newMsg.text,
               lastMessageTime: new Date(newMsg.createdAt).toLocaleTimeString(
                 [],
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }
+                { hour: "2-digit", minute: "2-digit" }
               ),
               lastMessageDate: new Date(newMsg.createdAt),
             }
           : prev
       );
 
-      // refetch chats to update list
-      refetch();
-    } catch (err: any) {
-      console.error(
-        "Failed to send message",
-        err?.data || err?.error || err?.message || err
-      );
+      refetch(); // refresh chat list
+    } catch (err) {
+      console.error(err);
     }
   };
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      scrollToBottom();
+    }, 50); // wait for UI to render
+    return () => clearTimeout(timeout);
+  }, [messages]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -299,7 +394,6 @@ export default function SupportPage() {
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        // src={selectedChat.avatar}
                         src={getImageUrl(selectedChat.avatar)}
                         alt={selectedChat.userName}
                       />
@@ -322,7 +416,7 @@ export default function SupportPage() {
               <CardContent className="p-0">
                 <ScrollArea className="h-[400px] p-4">
                   <div className="space-y-4">
-                    {messages.reverse().map((message) => (
+                    {messages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${
@@ -349,9 +443,10 @@ export default function SupportPage() {
                         </div>
                       </div>
                     ))}
-                    <div ref={messagesEndRef} />
+                    <div ref={messagesEndRef} /> {/* 👈 sticky bottom */}
                   </div>
                 </ScrollArea>
+
                 <div className="border-t p-4">
                   <div className="flex space-x-2">
                     <Input

@@ -40,18 +40,18 @@ export function Navbar() {
     refetch();
   }, [refetch]);
 
-  useEffect(() => {
-    const socket = socketService.getSocket();
-    if (socket) {
-      socket.on("notification", (notification) => {
-        dispatch(addNotification(notification));
-      });
+  // useEffect(() => {
+  //   const socket = socketService.getSocket();
+  //   if (socket) {
+  //     socket.on("notification", (notification) => {
+  //       dispatch(addNotification(notification));
+  //     });
 
-      return () => {
-        socket.off("notification");
-      };
-    }
-  }, [dispatch]);
+  //     return () => {
+  //       socket.off("notification");
+  //     };
+  //   }
+  // }, [dispatch]);
 
   const handleNotificationClick = (id: string) => {
     dispatch(markAsRead(id));
@@ -72,7 +72,7 @@ export function Navbar() {
 
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <Popover>
+          {/* <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
@@ -134,7 +134,7 @@ export function Navbar() {
                 )}
               </div>
             </PopoverContent>
-          </Popover>
+          </Popover> */}
 
           {/* User Profile */}
           <DropdownMenu>

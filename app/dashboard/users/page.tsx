@@ -213,6 +213,7 @@ export default function UsersPage() {
                                 checked ? "ACTIVE" : "INACTIVE"
                               )
                             }
+                            className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                           />
                         </div>
                       </TableCell>
