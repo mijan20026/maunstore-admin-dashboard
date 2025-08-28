@@ -57,7 +57,7 @@ export const categoriesApi = api.injectEndpoints({
           body: formData,
         };
       },
-      invalidatesTags: ["Category", "Brand"],
+      invalidatesTags: ["Category", "Brand", "Categories"],
     }),
 
     updateCategory: builder.mutation<
@@ -83,7 +83,7 @@ export const categoriesApi = api.injectEndpoints({
           body: formData,
         };
       },
-      invalidatesTags: ["Category"],
+      invalidatesTags: ["Category", "Brand", "Categories"],
     }),
 
     deleteCategory: builder.mutation<{ success: boolean }, string>({
@@ -91,7 +91,7 @@ export const categoriesApi = api.injectEndpoints({
         url: `/categories/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Category"],
+      invalidatesTags: ["Category", "Categories"],
     }),
   }),
 });

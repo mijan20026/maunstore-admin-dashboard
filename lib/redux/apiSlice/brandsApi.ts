@@ -26,7 +26,7 @@ export const brandsApi = api.injectEndpoints({
         url: `/brands?page=${page}&limit=${limit}`,
         method: "GET",
       }),
-      providesTags: ["Brand"],
+      providesTags: ["Brand", "Category"],
     }),
 
     addBrand: builder.mutation<
@@ -45,7 +45,7 @@ export const brandsApi = api.injectEndpoints({
           body: formData, // ✅ multipart/form-data
         };
       },
-      invalidatesTags: ["Brand"],
+      invalidatesTags: ["Brand", "Category"],
     }),
 
     updateBrand: builder.mutation<
