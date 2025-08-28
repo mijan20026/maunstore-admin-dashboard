@@ -147,7 +147,7 @@ export function Navbar() {
                       profileData?.data?.profileImage
                         ? profileData.data.profileImage.startsWith("http")
                           ? profileData.data.profileImage
-                          : `http://10.10.7.111:5003${profileData.data.profileImage}`
+                          : `http://10.10.7.111:5000${profileData.data.profileImage}`
                         : undefined
                     }
                     alt={profileData?.data?.name || "User"}

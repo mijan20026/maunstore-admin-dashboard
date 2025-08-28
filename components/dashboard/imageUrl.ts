@@ -6,7 +6,7 @@ export const getImageUrl = (path?: string): string => {
   if (path.startsWith("http://") || path.startsWith("https://")) {
     return path;
   } else {
-    const baseUrl = "http://10.10.7.111:5003";
+    const baseUrl = "http://10.10.7.111:5000";
     return `${baseUrl}/${path}`;
   }
 };

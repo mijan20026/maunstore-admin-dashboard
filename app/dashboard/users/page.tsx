@@ -25,6 +25,7 @@ import {
   useUpdateUserStatusMutation,
   useDeleteUserMutation,
 } from "@/lib/redux/apiSlice/usersApi";
+import { getImageUrl } from "@/components/dashboard/imageUrl";
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -165,7 +166,10 @@ export default function UsersPage() {
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarImage
+                              src={getImageUrl(user.profileImage)}
+                              alt={user.name}
+                            />
                             <AvatarFallback>
                               {user.name
                                 .split(" ")
