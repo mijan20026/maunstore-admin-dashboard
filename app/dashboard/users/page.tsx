@@ -132,7 +132,7 @@ export default function UsersPage() {
             className="pl-10"
           />
         </div>
-        <Button onClick={handleAdd}>Add User</Button>
+        {/* <Button onClick={handleAdd}>Add User</Button> */}
       </div>
 
       <Card>
