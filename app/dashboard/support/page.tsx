@@ -191,9 +191,8 @@ export default function SupportPage() {
         return;
       }
 
-      // If server sends only the message object directly
       const chatId = data.chatId || selectedChatRef.current?.id || "unknown";
-      const message = data.message || data; // fallback to data itself
+      const message = data.message || data;
 
       const formattedMessage: Message = {
         id: message?._id || Math.random().toString(),
@@ -205,19 +204,55 @@ export default function SupportPage() {
         isAdmin: message?.sender?._id === loggedInUser._id,
       };
 
-      // Append only if it matches the selected chat
+      // ✅ HERE (Step 2)
       if (selectedChatRef.current && chatId === selectedChatRef.current.id) {
+        // If user is already inside this chat → show message + mark as read
         setMessages((prev) => [...prev, formattedMessage]);
-      }
 
-      // Always refresh chat list
-      refetch();
+        // Optionally call backend to clear unread
+        // await api.markAsRead(chatId);
+      } else {
+        // Otherwise let the unread count update from server
+        refetch();
+      }
     };
 
     socket.on(eventName, listener);
 
     return () => {
       socket.off(eventName, listener);
+      socketService.disconnect();
+    };
+  }, [loggedInUser._id, refetch]);
+
+  useEffect(() => {
+    if (!loggedInUser._id) return;
+
+    const socket = socketService.connect();
+
+    // 🔔 unread count event from server
+    const unreadEvent = `unreadCountUpdate::${loggedInUser._id}`;
+
+    const handleUnreadUpdate = (data: {
+      chatId: string;
+      unreadCount: number;
+    }) => {
+      setSelectedChat((prev) => {
+        // If currently viewing this chat, force unreadCount to 0
+        if (prev && prev.id === data.chatId) {
+          return { ...prev, unreadCount: 0 };
+        }
+        return prev;
+      });
+
+      // Update the chatSessions state optimistically
+      refetch(); // or manually update if you keep local state
+    };
+
+    socket.on(unreadEvent, handleUnreadUpdate);
+
+    return () => {
+      socket.off(unreadEvent, handleUnreadUpdate);
       socketService.disconnect();
     };
   }, [loggedInUser._id, refetch]);
@@ -351,11 +386,11 @@ export default function SupportPage() {
                               .join("")}
                           </AvatarFallback>
                         </Avatar>
-                        <div
+                        {/* <div
                           className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full ${getStatusColor(
                             session.status
                           )}`}
-                        />
+                        /> */}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
